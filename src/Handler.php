@@ -21,22 +21,16 @@ class Handler
 	 * Handler constructor.
 	 *
 	 * @param array $options
-	 *  env - dev,stable (stable env does not display full errors erros
-	 *  stableDefaultMsg - when env is stable this error message is displayed
-	 *  dateFormat - defaults to null, string for email or you can use your own PHPMailer object
+ 	 *  dateFormat - defaults to null, string for email or you can use your own PHPMailer object
 	 *  email - defaults to null, string for email or you can use your own PHPMailer object
 	 *  debugBacktraceOption - https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
 	 *  log - callable passed ErrorNode
 	 */
 	public function __construct(array $options = [])
 	{
-		$default                    = ["env" => "stable", "stableDefaultMsg" => "oops...something went wrong", "dateFormat" => "d.m.Y H:i:s", "email" => null, "log" => null, "errorLevel" => -1, "debugBacktraceOption" => 0];
+		$default                    = ["dateFormat" => "d.m.Y H:i:s", "email" => null, "log" => null, "errorLevel" => -1, "debugBacktraceOption" => 0];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options["debugBacktraceOption"];
-		if (!in_array(self::getOpt("env"), ["stable", "dev"]))
-		{
-			exit("unknown envinronment " . self::getOpt("env"));
-		}
 		
 		ini_set('display_errors', "1");
 		ini_set('display_startup_errors', "1");
@@ -87,11 +81,6 @@ class Handler
 		{
 			self::log($ErrorNode);
 		}
-		if (self::getOpt("env") == "stable")
-		{
-			return self::getOpt("stableDefaultMsg");
-		}
-		
 		throw new \Infira\Error\Error($ErrorNode->toHtml());
 	}
 	
