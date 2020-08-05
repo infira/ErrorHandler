@@ -20,6 +20,8 @@ Features
 Setup
 -----
 
+Use [composer](http://getcomposer.org) to install the library:
+
 Add the library to your `composer.json` file in your project:
 
 ```javascript
@@ -29,15 +31,12 @@ Add the library to your `composer.json` file in your project:
   }
 }
 ```
+or terminal
 
-Use [composer](http://getcomposer.org) to install the library:
 
 ```bash
 $ composer require infira/errorhandler
 ```
-
-Composer will install SimpleLog inside your vendor folder. Then you can add the following to your
-.php files to use the library with Autoloading.
 
 ### Minimum Requirements
  * PHP 7
