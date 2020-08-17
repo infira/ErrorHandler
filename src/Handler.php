@@ -61,7 +61,7 @@ class Handler
 	 * @param int    $errorNo
 	 * @param string $errorFile
 	 * @param int    $errorLine
-	 * @throws InfiraError
+	 * @throws Error
 	 * @return mixed
 	 */
 	private static function trigger(string $errorMsg, int $errorNo = E_USER_ERROR, string $errorFile = '', int $errorLine = 0)
@@ -75,12 +75,12 @@ class Handler
 		{
 			if (self::beforeThrow($ErrorNode) !== self::BREAK)
 			{
-				throw new InfiraError($ErrorNode->toHtml());
+				throw new Error($ErrorNode->toHtml());
 			}
 		}
 		else
 		{
-			throw new InfiraError($ErrorNode->toHtml());
+			throw new Error($ErrorNode->toHtml());
 		}
 	}
 	
@@ -188,7 +188,7 @@ class Handler
 	 *
 	 * @param string $msg
 	 * @param mixed  $extra - extra data will be added to error message
-	 * @throws InfiraError
+	 * @throws Error
 	 * @return void
 	 */
 	public static function raise($msg, $extra = null): void

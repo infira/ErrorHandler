@@ -2,6 +2,6 @@
 
 namespace Infira\Error;
 
-class InfiraError extends \ErrorException
+class Error extends \ErrorException
 {
 }

@@ -95,7 +95,7 @@ class Node
 				$val = '<pre style="margin-top:0;display: inline">' . dump($val) . "</pre>";
 			}
 			$val = str_replace("[NL]", '<br>', $val);
-			$str .= $name . ' : ' . $val . '<br>';
+			$str .= '<strong>' . $name . '</strong>: ' . $val . '<br>';
 		}
 		
 		return $str;

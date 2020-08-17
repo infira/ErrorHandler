@@ -18,10 +18,11 @@ $Handler = new \Infira\Error\Handler($config);
 
 try
 {
+	throw new ErrorException("testing");
 	addExtraErrorInfo("extraData", "extra data value");
 	raiseSomeError();
 }
-catch (\Infira\Error\InfiraError $e)
+catch (\Infira\Error\Error $e)
 {
 	echo $e->getMessage();
 }

@@ -12,7 +12,7 @@ function alertEmail($msg)
  *
  * @param string $msg
  * @param mixed  $extra - extra error info
- * @throws \Infira\Error\InfiraError
+ * @throws \Infira\Error\Error
  */
 function alert(string $msg, $extra = null)
 {

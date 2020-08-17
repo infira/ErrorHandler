@@ -60,7 +60,7 @@ try
 {
     require_once "startApp.php";//here you run your entire project
 }
-catch (\Infira\Error\InfiraError $e)
+catch (\Infira\Error\Error $e)
 {
 	echo $e->getMessage();
 }
@@ -97,7 +97,7 @@ try
 	addExtraErrorInfo("extraData", "extra data value");
 	raiseSomeError();
 }
-catch (\Infira\Error\InfiraError $e)
+catch (\Infira\Error\Error $e)
 {
 	echo $e->getMessage();
 }
@@ -139,7 +139,7 @@ Raise a error, code will stop executing
 **Throws Exceptions**
 
 
-`\InfiraError`
+`\Infira\Error\Error`
 
 #### Example
 ```php
