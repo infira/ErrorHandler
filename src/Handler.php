@@ -164,10 +164,10 @@ class Handler
 	/**
 	 * Add extra to error output for more extended information
 	 *
-	 * @param string $name
-	 * @param mixed  $data - will add to error output
+	 * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
+	 * @param mixed        $data [$name=>$data] will be added to error output
 	 */
-	public static function addExtraErrorInfo(string $name, $data = self::UNDEFINED)
+	public static function addExtraErrorInfo($name, $data = self::UNDEFINED)
 	{
 		if (is_array($name) and $data === self::UNDEFINED)
 		{

@@ -188,27 +188,26 @@ MyError::raiseEmail('my custom error with extra Data',['extra' => 'data']);
 **Description**
 
 ```php
-public static addExtraErrorInfo (string $name, mixed $data)
+public static addExtraErrorInfo (string|array $name, mixed $data)
 ```
 
-Add extra to error output for more extended information <br>
-Will add error output
-EXTRA : Array
-(
-    [extraData] => extra data value
-)
+Add extra to error output for more extended information 
 
  
 
 **Parameters**
 
-* `(string) $name`
+* `(string|array) $name`
+: - string, or in case of array ,every key will be added as extra data key to error output  
 * `(mixed) $data`
-: - will add to error output  
+: - [$name=>$data] will be added to error output  
 
 **Return Values**
 
 `void`
+
+
+<hr />
 
 #### Example
 ```php
