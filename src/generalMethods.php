@@ -1,40 +1,30 @@
 <?php
+
+use Infira\Error\Handler as Error;
+
 function alertEmail($msg)
 {
-	\Infira\Error\Handler::alertEmail($msg);
+	Error::triggerEamil($msg);
 }
 
 /**
  * Triggers a E_USER_ERROR
  *
  * @param string $msg
+ * @param mixed  $extra - extra error info
+ * @throws \Infira\Error\InfiraError
  */
-function alert(string $msg)
+function alert(string $msg, $extra = null)
 {
-	\Infira\Error\Handler::setTrace(debug_backtrace(\Infira\Error\Handler::$debugBacktraceOption));
-	\Infira\Error\Handler::trigger($msg, E_USER_ERROR);
+	Error::raise($msg, $extra);
 }
 
 function clearExtraErrorInfo()
 {
-	$GLOBALS["extraErrorInfo"] = [];
+	Error::clearExtraErrorInfo();
 }
 
-function addExtraErrorInfo($name, $data = false)
+function addExtraErrorInfo($name, $data = Error::UNDEFINED)
 {
-	if (!isset($GLOBALS["extraErrorInfo"]))
-	{
-		$GLOBALS["extraErrorInfo"] = [];
-	}
-	if (is_array($name) and $data === false)
-	{
-		foreach ($name as $n => $v)
-		{
-			addExtraErrorInfo($n, $v);
-		}
-	}
-	else
-	{
-		$GLOBALS["extraErrorInfo"][$name] = $data;
-	}
+	Error::addExtraErrorInfo($name, $data);
 }

@@ -16,7 +16,10 @@
 	}
   ],
   "require"          : {
+	"infira/utils": "1.*"
+  },
+  "require-dev"      : {
 	"phpmailer/phpmailer": "6.1.*",
-	"infira/utils"       : "1.2.*"
+	"clean/phpdoc-md"    : "*"
   }
 }
