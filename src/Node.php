@@ -4,6 +4,7 @@ namespace Infira\Error;
 
 use Infira\Utils\Http;
 use Infira\Utils\Session as Sess;
+use Infira\Utils\RuntimeMemory as Rm;
 
 /**
  * Stores error information
@@ -45,7 +46,7 @@ class Node
 		$this->vars->trace    = $trace;
 		$this->vars->url      = Http::getCurrentUrl();
 		$this->vars->phpInput = file_get_contents("php://input");
-		$this->vars->EXTRA    = (isset($GLOBALS["extraErrorInfo"])) ? $GLOBALS["extraErrorInfo"] : "false";
+		$this->vars->EXTRA    = Rm::Collection("ErrorHandlerExtraInfo")->getItems();
 		$this->vars->POST     = Http::getPOST();
 		$this->vars->GET      = Http::getGET();
 		if (Sess::$isStarted)

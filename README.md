@@ -52,7 +52,7 @@ try
 {
     require_once "startApp.php";//here you run your entire project
 }
-catch (\Infira\Error\Error $e)
+catch (\Infira\Error\InfiraError $e)
 {
 	echo $e->getMessage();
 }
@@ -67,33 +67,29 @@ That's it! Your application is catching errors!
 
 ### Extended Example
 ```php
-require_once "vendor/autoload.php";
-
+require_once "../vendor/autoload.php";
 $Mailer = new PHPMailer\PHPMailer\PHPMailer();
-$Mailer->addAddress("gen@infira.ee");
-$Mailer->setFrom("beta@infira.ee");
-$Mailer->Subject = "My beta site error";
-$config = [
-    "errorLevel" => -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
-    "email" => $Mailer, //or you can provide simply email address, then default PHPMailer instance is used
+$Mailer->addAddress('gen@infira.ee');
+$Mailer->setFrom('beta@infira.ee');
+$Mailer->Subject                = 'My beta site error';
+$config                         = [];
+$config['errorLevel']           = -1;
+$config['mailer']               = $Mailer;
+$config['beforeThrow']          = function (\Infira\Error\Node $Node)
+{
+	var_dump($Node->getVars());
+};
+$config['debugBacktraceOption'] = 0;
 
-    /*
-     * Provide a calllable argument for loging, use your own logger
-     * For example https://github.com/markrogoyski/simplelog-php/blob/master/README.md
-     */
-    "log" => function (\Infira\Error\Node $Node)
-    {
-        //var_dump($Node->getVars());
-    },
-    "debugBacktraceOption" => 0 //Disable 'object' key from trace for less footprint https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
-];
 $Handler = new \Infira\Error\Handler($config);
+
 
 try
 {
-    require_once "startApp.php";
+	addExtraErrorInfo("extraData", "extra data value");
+	raiseSomeError();
 }
-catch (\Infira\Error\Error $e)
+catch (\Infira\Error\InfiraError $e)
 {
 	echo $e->getMessage();
 }
@@ -104,7 +100,107 @@ catch (Throwable $e)
 
 ```
 
-License
+Class docs
 -------
 
-ErrorHandler is licensed under the MIT License.
+### Handler::raise  
+
+**Description**
+
+```php
+public static raise (string $msg, mixed $extra)
+```
+
+Raise a error, code will stop executing 
+
+ 
+
+**Parameters**
+
+* `(string) $msg`
+* `(mixed) $extra`
+
+**Return Values**
+
+`void`
+
+
+
+
+**Throws Exceptions**
+
+
+`\InfiraError`
+
+#### Example
+```php
+use Infira\Error\Handler AS MyError;
+MyError::raise('my custom error');
+```
+<hr />
+
+### Handler::raiseEmail  
+
+**Description**
+
+```php
+public static raiseEmail (string $message)
+```
+
+Send error to email only, code will continue executing
+will work when email is configured
+Uses PHPMailer 
+
+ 
+
+**Parameters**
+
+* `(string) $message`
+
+**Return Values**
+
+`void`
+
+
+#### Example
+```php
+use Infira\Error\Handler AS MyError;
+MyError::raiseEmail('my custom error');
+```
+
+<hr />
+
+### Handler::addExtraErrorInfo  
+
+**Description**
+
+```php
+public static addExtraErrorInfo (string $name, mixed $data)
+```
+
+Add extra to error output for more extended information <br>
+Will add error output
+EXTRA : Array
+(
+    [extraData] => extra data value
+)
+
+ 
+
+**Parameters**
+
+* `(string) $name`
+* `(mixed) $data`
+: - will add to error output  
+
+**Return Values**
+
+`void`
+
+#### Example
+```php
+use Infira\Error\Handler AS MyError;
+MyError::addExtraErrorInfo('extraData','extra Data value');
+MyError::raiseEmail('my custom error');
+```
+<hr />
