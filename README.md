@@ -31,6 +31,14 @@ Add the library to your `composer.json` file in your project:
   }
 }
 ```
+To use latest and greatest
+```javascript
+{
+  "require": {
+      "infira/errorhandler": "dev-master"
+  }
+}
+```
 or terminal
 
 
