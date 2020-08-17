@@ -119,6 +119,7 @@ Raise a error, code will stop executing
 
 * `(string) $msg`
 * `(mixed) $extra`
+: - extra data will be added to error message  
 
 **Return Values**
 
@@ -136,6 +137,7 @@ Raise a error, code will stop executing
 ```php
 use Infira\Error\Handler AS MyError;
 MyError::raise('my custom error');
+MyError::raise('my custom error with extra Data',['extra' => 'data']);
 ```
 <hr />
 
@@ -144,7 +146,7 @@ MyError::raise('my custom error');
 **Description**
 
 ```php
-public static raiseEmail (string $message)
+public static raiseEmail (string $message, mixed $extra)
 ```
 
 Send error to email only, code will continue executing
@@ -156,6 +158,8 @@ Uses PHPMailer
 **Parameters**
 
 * `(string) $message`
+* `(mixed) $extra`
+: - extra data will be added to error message  
 
 **Return Values**
 
@@ -166,6 +170,7 @@ Uses PHPMailer
 ```php
 use Infira\Error\Handler AS MyError;
 MyError::raiseEmail('my custom error');
+MyError::raiseEmail('my custom error with extra Data',['extra' => 'data']);
 ```
 
 <hr />

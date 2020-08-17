@@ -187,7 +187,7 @@ class Handler
 	 * Raise a error, code will stop executing
 	 *
 	 * @param string $msg
-	 * @param mixed  $extra
+	 * @param mixed  $extra - extra data will be added to error message
 	 * @throws InfiraError
 	 * @return void
 	 */
@@ -207,10 +207,15 @@ class Handler
 	 * Uses PHPMailer
 	 *
 	 * @param string $message
+	 * @param mixed  $extra - extra data will be added to error message
 	 * @return void
 	 */
-	public static function raiseEmail(string $message): void
+	public static function raiseEmail(string $message, $extra = null): void
 	{
+		if ($extra)
+		{
+			self::addExtraErrorInfo($extra);
+		}
 		self::mail(self::constructErrorNode($message));
 	}
 	
