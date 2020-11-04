@@ -41,7 +41,7 @@ class Handler
 		
 		set_error_handler(function ($errorNo, $errorMsg, $errFile, $errLine)
 		{
-			self::setTrace(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS));
+			self::setTrace(debug_backtrace(self::$debugBacktraceOption));
 			self::trigger($errorMsg, $errorNo, $errFile, $errLine);
 		});
 		register_shutdown_function(function ()
@@ -228,6 +228,17 @@ class Handler
 	public function catch(\Throwable $Exception): string
 	{
 		$trace = $Exception->getTrace();
+		if (self::$debugBacktraceOption === DEBUG_BACKTRACE_IGNORE_ARGS)
+		{
+			foreach ($trace as $k => $arg)
+			{
+				if (isset($trace[$k]['args']))
+				{
+					unset($trace[$k]['args']);
+				}
+			}
+		}
+		
 		if (!checkArray($trace))
 		{
 			$trace = [];
