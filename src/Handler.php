@@ -18,6 +18,7 @@ class Handler
 	public static  $debugBacktraceOption       = 1; //https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
 	const UNDEFINED = '___undefined___';
 	const BREAK     = '___break___';
+	private static $isInited = false;
 	
 	/**
 	 * Handler constructor.
@@ -31,6 +32,7 @@ class Handler
 	 */
 	public function __construct(array $options = [])
 	{
+		self::$isInited             = true;
 		$default                    = ['dateFormat' => 'd.m.Y H:i:s', 'email' => null, 'beforeThrow' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options['debugBacktraceOption'];
@@ -197,7 +199,20 @@ class Handler
 		{
 			self::addExtraErrorInfo($extra);
 		}
-		self::setTrace(debug_backtrace(self::$debugBacktraceOption));
+		$trace = debug_backtrace(self::$debugBacktraceOption);
+		if (!self::$isInited)
+		{
+			echo "<pre>";
+			echo '<font style="color:red;font-weight: bold">Error:</font>' . $msg . '<br />';
+			echo 'Extra info:<br />';
+			print_r(Rm::Collection('ErrorHandlerExtraInfo')->getItems());
+			echo 'Trace:<br />';
+			print_r($trace);
+			echo '</pre > ';
+			exit;
+			new Handler();
+		}
+		self::setTrace($trace);
 		self::trigger($msg, E_USER_ERROR);
 	}
 	
