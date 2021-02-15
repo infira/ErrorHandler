@@ -152,8 +152,8 @@ class Handler
 		{
 			return false;
 		}
-		$callable = self::getOpt('beforeThrow');
-		$callable($ErrorNode);
+		
+		return $callable($ErrorNode);
 	}
 	//########################################################################################### EOF Actions
 	
