@@ -4,7 +4,7 @@ use Infira\Error\Handler as Error;
 
 function alertEmail($msg)
 {
-	Error::triggerEamil($msg);
+	Error::raiseEmail($msg);
 }
 
 /**

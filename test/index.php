@@ -3,30 +3,30 @@ require_once "../vendor/autoload.php";
 $Mailer = new PHPMailer\PHPMailer\PHPMailer();
 $Mailer->addAddress('gen@infira.ee');
 $Mailer->setFrom('beta@infira.ee');
-$Mailer->Subject                = 'My beta site error';
+$Mailer->Subject                = 'My site error';
 $config                         = [];
 $config['errorLevel']           = -1;
-$config['mailer']               = $Mailer;
-$config['beforeThrow']          = function (\Infira\Error\Node $Node)
-{
-	var_dump($Node->getVars());
-};
+$config['email']                = $Mailer;
 $config['debugBacktraceOption'] = 0;
 
 $Handler = new \Infira\Error\Handler($config);
 
-
 try
 {
-	throw new ErrorException("testing");
 	addExtraErrorInfo("extraData", "extra data value");
-	raiseSomeError();
+	throw new Exception('throw new Exception');
+	//\Infira\Error\Handler::raise("Raise infira error");
+	//raiseSomeError();
+	//trigger_error("error");
 }
 catch (\Infira\Error\Error $e)
 {
-	echo $e->getMessage();
+	debug("catch infira error");
+	echo $e->getHTMLTable();
 }
 catch (Throwable $e)
 {
-	echo $Handler->catch($e);
+	debug("Catch Throwable");
+	echo $Handler->catch($e)->getHTMLTable();
 }
+?>

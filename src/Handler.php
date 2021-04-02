@@ -3,7 +3,6 @@
 namespace Infira\Error;
 
 use Infira\Utils\Is as Is;
-use Infira\Error\Node as ErrorNode;
 use PHPMailer\PHPMailer\PHPMailer as PHPMailer;
 use Infira\Utils\RuntimeMemory as Rm;
 
@@ -12,13 +11,13 @@ use Infira\Utils\RuntimeMemory as Rm;
  */
 class Handler
 {
-	private static $dontShowSSLVariablesOnShow = true;
 	private static $options;
-	private static $trace                      = null;
-	public static  $debugBacktraceOption       = 1; //https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
+	private static $trace                = null;
+	public static  $debugBacktraceOption = 1; //https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
 	const UNDEFINED = '___undefined___';
 	const BREAK     = '___break___';
-	private static $isInited = false;
+	private static $isInited          = false;
+	private static $defaultDateFormat = 'd.m.Y H:i:s';
 	
 	/**
 	 * Handler constructor.
@@ -26,14 +25,13 @@ class Handler
 	 * @param array $options
 	 *  errorLevel - -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
 	 *  dateFormat - d.m.Y H:i:s
-	 *  mailer - use to send error to email. defaults to null, a Object which has isHTML() and Send() method in it. I recommend PHPMailer (https://github.com/PHPMailer/PHPMailer)
+	 *  email - use to send error to email. defaults to null, a Object which has isHTML() and Send() method in it. I recommend PHPMailer (https://github.com/PHPMailer/PHPMailer)
 	 *  debugBacktraceOption - https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
-	 *  beforeThrow - optional callable passed ErrorNode, will be called just before throw, if Handler::BREAK is returned, then throw new will not trigger. can be ise for logging
 	 */
 	public function __construct(array $options = [])
 	{
 		self::$isInited             = true;
-		$default                    = ['dateFormat' => 'd.m.Y H:i:s', 'email' => null, 'beforeThrow' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
+		$default                    = ['dateFormat' => self::$defaultDateFormat, 'email' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options['debugBacktraceOption'];
 		
@@ -43,7 +41,6 @@ class Handler
 		
 		set_error_handler(function ($errorNo, $errorMsg, $errFile, $errLine)
 		{
-			self::setTrace(debug_backtrace(self::$debugBacktraceOption));
 			self::trigger($errorMsg, $errorNo, $errFile, $errLine);
 		});
 		register_shutdown_function(function ()
@@ -59,49 +56,31 @@ class Handler
 	/**
 	 * trigger error
 	 *
-	 * @param string $errorMsg
-	 * @param int    $errorNo
-	 * @param string $errorFile
-	 * @param int    $errorLine
+	 * @param string $message
+	 * @param int    $code
+	 * @param string $file
+	 * @param int    $line
 	 * @throws Error
 	 * @return mixed
 	 */
-	private static function trigger(string $errorMsg, int $errorNo = E_USER_ERROR, string $errorFile = '', int $errorLine = 0)
+	private static function trigger(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0)
 	{
-		$ErrorNode = self::constructErrorNode($errorMsg, $errorNo, $errorFile, $errorLine);
+		$error = self::makeError($message, $code, $file, $line);
 		if (self::getOpt('email') !== null)
 		{
-			self::mail($ErrorNode);
+			self::mail($error);
 		}
-		if (self::getOpt('beforeThrow') !== null)
-		{
-			if (self::beforeThrow($ErrorNode) !== self::BREAK)
-			{
-				throw new Error($ErrorNode->toHtml());
-			}
-		}
-		else
-		{
-			throw new Error($ErrorNode->toHtml());
-		}
+		throw $error;
 	}
 	
-	private static function constructErrorNode(string $errorMsg, int $errorNo = E_USER_ERROR, string $errorFile = '', int $errorLine = 0)
+	private static function makeError(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0): Error
 	{
-		$ErrorNode   = new Node($errorNo, $errorMsg, $errorFile, $errorLine, self::$dontShowSSLVariablesOnShow, self::getOpt('dateFormat'), self::$trace);
-		self::$trace = null;
+		$error = new Error($message, $code, 1, $file, $line);
+		$error->setTrace(debug_backtrace(self::$debugBacktraceOption));
+		$error->setDateFormat(self::getOpt('dateFormat') ? self::getOpt('dateFormat') : self::$defaultDateFormat);
+		$error->stack();
 		
-		return $ErrorNode;
-	}
-	
-	/**
-	 * set trace to upcoming error
-	 *
-	 * @param array $trace
-	 */
-	private static function setTrace($trace)
-	{
-		self::$trace = $trace;
+		return $error;
 	}
 	
 	/**
@@ -115,9 +94,7 @@ class Handler
 		return self::$options[$name];
 	}
 	
-	//########################################################################################### SOF Actions
-	
-	private static function mail(Node $ErrorNode)
+	private static function mail(Error $Error)
 	{
 		$email  = self::getOpt('email');
 		$Mailer = null;
@@ -137,25 +114,13 @@ class Handler
 		{
 			if (!$Mailer->Subject)
 			{
-				$Mailer->Subject = 'Page ErrorReporting - ' . $ErrorNode->title;
+				$Mailer->Subject = 'Page ErrorReporting - ' . $Error->getTitle();
 			}
-			$Mailer->Body = $ErrorNode->toHtml();
+			$Mailer->Body = $Error->getHTMLTable();
 			$Mailer->isHTML(true);
 			$Mailer->Send();
 		}
 	}
-	
-	private static function beforeThrow(Node $ErrorNode)
-	{
-		$callable = self::getOpt('beforeThrow');
-		if (!is_callable($callable))
-		{
-			return false;
-		}
-		
-		return $callable($ErrorNode);
-	}
-	//########################################################################################### EOF Actions
 	
 	//########################################################################################### SOF Public Actions
 	public static function clearExtraErrorInfo()
@@ -184,7 +149,6 @@ class Handler
 		}
 	}
 	
-	
 	/**
 	 * Raise a error, code will stop executing
 	 *
@@ -193,26 +157,12 @@ class Handler
 	 * @throws Error
 	 * @return void
 	 */
-	public static function raise($msg, $extra = null): void
+	public static function raise(string $msg, $extra = null): void
 	{
 		if ($extra)
 		{
 			self::addExtraErrorInfo($extra);
 		}
-		$trace = debug_backtrace(self::$debugBacktraceOption);
-		if (!self::$isInited)
-		{
-			echo "<pre>";
-			echo '<font style="color:red;font-weight: bold">Error:</font>' . $msg . '<br />';
-			echo 'Extra info:<br />';
-			print_r(Rm::Collection('ErrorHandlerExtraInfo')->getItems());
-			echo 'Trace:<br />';
-			print_r($trace);
-			echo '</pre > ';
-			exit;
-			new Handler();
-		}
-		self::setTrace($trace);
 		self::trigger($msg, E_USER_ERROR);
 	}
 	
@@ -231,18 +181,18 @@ class Handler
 		{
 			self::addExtraErrorInfo($extra);
 		}
-		self::mail(self::constructErrorNode($message));
+		self::mail(self::makeError($message, E_USER_ERROR));
 	}
 	
 	/**
 	 * Error exception handler, will return error as HTML
 	 *
-	 * @param \Throwable $Exception
-	 * @return string
+	 * @param \Throwable $throwable
+	 * @return Error
 	 */
-	public function catch(\Throwable $Exception): string
+	public function catch(\Throwable $throwable): Error
 	{
-		$trace = $Exception->getTrace();
+		$trace = $throwable->getTrace();
 		if (self::$debugBacktraceOption === DEBUG_BACKTRACE_IGNORE_ARGS)
 		{
 			foreach ($trace as $k => $arg)
@@ -259,11 +209,17 @@ class Handler
 			$trace = [];
 		}
 		$trace   = array_reverse($trace);
-		$trace[] = ['file' => $Exception->getFile(), 'line' => $Exception->getLine()];
-		self::setTrace(array_reverse($trace));
-		$ErrorNode = self::constructErrorNode($Exception->getMessage(), $Exception->getCode(), $Exception->getFile(), $Exception->getLine());
+		$trace[] = ['file' => $throwable->getFile(), 'line' => $throwable->getLine()];
+		$error   = self::makeError($throwable->getMessage(), $throwable->getCode(), $throwable->getFile(), $throwable->getLine());
+		$error->setTrace([]);
+		$error->stack();
 		
-		return $ErrorNode->toHtml();
+		if (self::getOpt('email') !== null)
+		{
+			self::mail($error);
+		}
+		
+		return $error;
 	}
 	//########################################################################################### EOF Public Actions
 }

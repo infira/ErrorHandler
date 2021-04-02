@@ -58,15 +58,15 @@ require_once "vendor/autoload.php";
 $Handler = new Infira\Error\Handler();
 try
 {
-    require_once "startApp.php";//here you run your entire project
+	//... your app code goes here
 }
 catch (\Infira\Error\Error $e)
 {
-	echo $e->getMessage();
+	echo $e->getHTMLTable();
 }
 catch (Throwable $e)
 {
-	echo $Handler->catch($e);
+	echo $Handler->catch($e)->getHTMLTable();
 }
 
 ```
@@ -79,31 +79,25 @@ require_once "../vendor/autoload.php";
 $Mailer = new PHPMailer\PHPMailer\PHPMailer();
 $Mailer->addAddress('gen@infira.ee');
 $Mailer->setFrom('beta@infira.ee');
-$Mailer->Subject                = 'My beta site error';
+$Mailer->Subject                = 'My site error';
 $config                         = [];
 $config['errorLevel']           = -1;
-$config['mailer']               = $Mailer;
-$config['beforeThrow']          = function (\Infira\Error\Node $Node)
-{
-	var_dump($Node->getVars());
-};
+$config['email']                = $Mailer;
 $config['debugBacktraceOption'] = 0;
 
 $Handler = new \Infira\Error\Handler($config);
 
-
 try
 {
-	addExtraErrorInfo("extraData", "extra data value");
-	raiseSomeError();
+	//... your app code goes here
 }
 catch (\Infira\Error\Error $e)
 {
-	echo $e->getMessage();
+	echo $e->getHTMLTable();
 }
 catch (Throwable $e)
 {
-	echo $Handler->catch($e);
+	echo $Handler->catch($e)->getHTMLTable();
 }
 
 ```
