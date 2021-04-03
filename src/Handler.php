@@ -211,7 +211,7 @@ class Handler
 		$trace   = array_reverse($trace);
 		$trace[] = ['file' => $throwable->getFile(), 'line' => $throwable->getLine()];
 		$error   = self::makeError($throwable->getMessage(), $throwable->getCode(), $throwable->getFile(), $throwable->getLine());
-		$error->setTrace([]);
+		$error->setTrace(array_reverse($trace));
 		$error->stack();
 		
 		if (self::getOpt('email') !== null)
