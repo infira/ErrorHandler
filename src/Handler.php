@@ -72,7 +72,11 @@ class Handler
 		}
 		if (is_callable($beforeThrow = self::getOpt('beforeThrow')))
 		{
-			$beforeThrow();
+			$res = $beforeThrow($error);
+			if ($res === false)
+			{
+				return false;
+			}
 		}
 		throw $error;
 	}
