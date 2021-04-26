@@ -106,6 +106,10 @@ class Handler
 				$Mailer->addAddress(self::getOpt('email'));
 			}
 		}
+		else if (is_callable($email))
+		{
+			$Mailer = $email();
+		}
 		else
 		{
 			$Mailer = $email;
