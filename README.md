@@ -83,6 +83,10 @@ $Mailer->Subject                = 'My site error';
 $config                         = [];
 $config['errorLevel']           = -1;
 $config['email']                = $Mailer;
+$config['beforeThrow']                = function(\Infira\Error\Error $e){
+    //log my error or to something cool with it
+    //if return false, then throw error will be voided
+};
 $config['debugBacktraceOption'] = 0;
 
 $Handler = new \Infira\Error\Handler($config);

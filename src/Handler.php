@@ -31,7 +31,7 @@ class Handler
 	public function __construct(array $options = [])
 	{
 		self::$isInited             = true;
-		$default                    = ['dateFormat' => self::$defaultDateFormat, 'email' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
+		$default                    = ['dateFormat' => self::$defaultDateFormat, 'email' => null, 'beforeThrow' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options['debugBacktraceOption'];
 		
@@ -70,6 +70,10 @@ class Handler
 		{
 			self::mail($error);
 		}
+		if (is_callable($beforeThrow = self::getOpt('beforeThrow')))
+		{
+			$beforeThrow();
+		}
 		throw $error;
 	}
 	
@@ -106,7 +110,7 @@ class Handler
 				$Mailer->addAddress(self::getOpt('email'));
 			}
 		}
-		else if (is_callable($email))
+		elseif (is_callable($email))
 		{
 			$Mailer = $email();
 		}
