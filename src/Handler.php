@@ -148,7 +148,6 @@ class Handler
 		{
 			$trace = [];
 		}
-		$trace   = [];
 		$trace   = array_reverse($trace);
 		$trace[] = ['file' => $throwable->getFile(), 'line' => $throwable->getLine()];
 		$error   = self::makeError($throwable->getMessage(), $throwable->getCode(), $throwable->getFile(), $throwable->getLine());
