@@ -126,7 +126,7 @@ class Error extends \ErrorException
 		{
 			foreach (['ErrorHandler/src/Handler.php', 'ErrorHandler/src/generalMethods.php'] as $c)
 			{
-				if (substr(strtolower($arg['file']), -strlen($c)) == $c)
+				if (substr(strtolower($arg['file']), -strlen($c)) == strtolower($c))
 				{
 					unset($trace[$k]);
 				}
