@@ -126,7 +126,7 @@ class Error extends \ErrorException
 		{
 			foreach (['ErrorHandler/src/Handler.php', 'ErrorHandler/src/generalMethods.php'] as $c)
 			{
-				if (substr($arg['file'], -strlen($c)) == $c)
+				if (substr(strtolower($arg['file']), -strlen($c)) == $c)
 				{
 					unset($trace[$k]);
 				}
@@ -148,7 +148,7 @@ class Error extends \ErrorException
 	{
 		if (!$this->stack)
 		{
-			//return $this->getMessage();
+			return $this->getMessage();
 		}
 		$str = "
 		<table cellpadding='0' cellspacing='0' border='0'>
@@ -167,7 +167,6 @@ class Error extends \ErrorException
 			{
 				$val = '<pre style="margin-top:0;display: inline">' . dump($val) . "</pre>";
 			}
-			$val = str_replace('/var/www/git/gitHubInfira/', '/var/www/', $val);
 			if ($name == 'title')
 			{
 				$name = '[ERROR_MSG]';
