@@ -3,23 +3,14 @@ ErrorHandler
 
 ### Comprehensive php error,notice, etc handler.
 
-Once in a while some bug gets into production code what didnt pass unit tests.
-ErrorHandler catcehs your defined error levels made by php-core, user, and custom errors and sends it to email, 
-logs, stores to file database(coming soon).
+Once in a while some bug gets into production what didn't show up in tests.
+ErrorHandler catches your defined error levels made by php-core, user, and custom errors and outputs it to browser,
+or you can make a custom wrapper to handle erros. Look examples below.
 
 
-Features
---------
+#Install
 
- * Emails
- * provide full data for logger
- * send all errors to php system log
- * it provides domprehensive data to debug and fix your code
- * coming soon...Full file based error loging
-
-Setup
------
-
+* Minimum Requirements - PHP 7
 Use [composer](http://getcomposer.org) to install the library:
 
 Add the library to your `composer.json` file in your project:
@@ -41,24 +32,20 @@ To use latest and greatest
 ```
 or terminal
 
-
 ```bash
 $ composer require infira/errorhandler
 ```
 
-### Minimum Requirements
- * PHP 7
+#Usage
 
-Usage
------
-
-### Add a ErrorHandler to your project
+## Custom errors
+* will use system default error level
 ```php
 require_once "vendor/autoload.php";
 $Handler = new Infira\Error\Handler();
 try
 {
-	//... your app code goes here
+	alert("my custom error",['extra'=>'data']);
 }
 catch (\Infira\Error\Error $e)
 {
@@ -68,29 +55,25 @@ catch (Throwable $e)
 {
 	echo $Handler->catch($e)->getHTMLTable();
 }
-
 ```
+getHTMLTable() will output, with all the goddies server has to offer
+![alt text](example.png)
 
 That's it! Your application is catching errors!
 
 ### Extended Example
 ```php
 require_once "../vendor/autoload.php";
-$Mailer = new PHPMailer\PHPMailer\PHPMailer();
-$Mailer->addAddress('gen@infira.ee');
-$Mailer->setFrom('beta@infira.ee');
-$Mailer->Subject                = 'My site error';
 $config                         = [];
-$config['errorLevel']           = -1;
-$config['email']                = $Mailer;
-$config['beforeThrow']                = function(\Infira\Error\Error $e){
-    //log my error or to something cool with it
-    //if return false, then throw error will be voided
+$config['errorLevel']           = -1; //will catch all kinds of errors, look https://www.php.net/manual/en/function.error-reporting.php
+$config['beforeTrigger']        = function (\Infira\Error\Error $e)
+{
+	//log my error or to something cool with it
+	//if return false, then throw error will be voided
 };
-$config['debugBacktraceOption'] = 0;
+$config['debugBacktraceOption'] = DEBUG_BACKTRACE_IGNORE_ARGS; //https://www.php.net/manual/en/function.debug-backtrace.php
 
 $Handler = new \Infira\Error\Handler($config);
-
 try
 {
 	//... your app code goes here
@@ -103,8 +86,8 @@ catch (Throwable $e)
 {
 	echo $Handler->catch($e)->getHTMLTable();
 }
-
 ```
+
 
 Class docs
 -------
@@ -116,69 +99,21 @@ Class docs
 ```php
 public static raise (string $msg, mixed $extra)
 ```
-
 Raise a error, code will stop executing 
-
- 
-
 **Parameters**
-
 * `(string) $msg`
 * `(mixed) $extra`
-: - extra data will be added to error message  
-
+: - $extra - extra data will be added to error message  
 **Return Values**
-
 `void`
-
-
-
-
 **Throws Exceptions**
-
-
 `\Infira\Error\Error`
 
 #### Example
 ```php
-use Infira\Error\Handler AS MyError;
-MyError::raise('my custom error');
-MyError::raise('my custom error with extra Data',['extra' => 'data']);
+\Infira\Error\Handler::raise('my custom error');
+\Infira\Error\Handler::raise('my custom error with extra Data',['extra' => 'data']);
 ```
-<hr />
-
-### Handler::raiseEmail  
-
-**Description**
-
-```php
-public static raiseEmail (string $message, mixed $extra)
-```
-
-Send error to email only, code will continue executing
-will work when email is configured
-Uses PHPMailer 
-
- 
-
-**Parameters**
-
-* `(string) $message`
-* `(mixed) $extra`
-: - extra data will be added to error message  
-
-**Return Values**
-
-`void`
-
-
-#### Example
-```php
-use Infira\Error\Handler AS MyError;
-MyError::raiseEmail('my custom error');
-MyError::raiseEmail('my custom error with extra Data',['extra' => 'data']);
-```
-
 <hr />
 
 ### Handler::addExtraErrorInfo  
@@ -188,29 +123,17 @@ MyError::raiseEmail('my custom error with extra Data',['extra' => 'data']);
 ```php
 public static addExtraErrorInfo (string|array $name, mixed $data)
 ```
-
 Add extra to error output for more extended information 
-
- 
-
 **Parameters**
-
 * `(string|array) $name`
 : - string, or in case of array ,every key will be added as extra data key to error output  
 * `(mixed) $data`
 : - [$name=>$data] will be added to error output  
-
 **Return Values**
-
 `void`
-
-
 <hr />
 
 #### Example
 ```php
-use Infira\Error\Handler AS MyError;
-MyError::addExtraErrorInfo('extraData','extra Data value');
-MyError::raiseEmail('my custom error');
+\Infira\Error\Handler::addExtraErrorInfo('extraData','extra Data value');
 ```
-<hr />

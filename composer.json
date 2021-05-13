@@ -1,25 +1,21 @@
 {
-  "name"             : "infira/errorhandler",
-  "description"      : "Comprehensive php error,notice, etc handler.",
-  "type"             : "library",
-  "autoload"         : {
-	"files": ["src/generalMethods.php"],
+  "name": "infira/errorhandler",
+  "description": "Comprehensive php error,notice, etc handler.",
+  "type": "library",
+  "autoload": {
+	"files": [ "src/generalMethods.php" ],
 	"psr-4": {
 	  "Infira\\Error\\": "src/"
 	}
   },
   "minimum-stability": "stable",
-  "authors"          : [
+  "authors": [
 	{
-	  "name" : "Gen Taliaru",
+	  "name": "Gen Taliaru",
 	  "email": "gen@infira.ee"
 	}
   ],
-  "require"          : {
+  "require": {
 	"infira/utils": "1.*"
-  },
-  "require-dev"      : {
-	"phpmailer/phpmailer": "6.1.*",
-	"clean/phpdoc-md"    : "*"
   }
 }

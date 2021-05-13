@@ -1,12 +1,4 @@
 <?php
-
-use Infira\Error\Handler as Error;
-
-function alertEmail($msg)
-{
-	Error::raiseEmail($msg);
-}
-
 /**
  * Triggers a E_USER_ERROR
  *
@@ -16,15 +8,24 @@ function alertEmail($msg)
  */
 function alert(string $msg, $extra = null)
 {
-	Error::raise($msg, $extra);
+	Infira\Error\Handler::raise($msg, $extra);
 }
 
+/**
+ * Clear Error handler extra info
+ */
 function clearExtraErrorInfo()
 {
-	Error::clearExtraErrorInfo();
+	Infira\Error\Handler::clearExtraErrorInfo();
 }
 
-function addExtraErrorInfo($name, $data = Error::UNDEFINED)
+/**
+ * Add extra to error output for more extended information
+ *
+ * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
+ * @param mixed        $data [$name=>$data] will be added to error output
+ */
+function addExtraErrorInfo($name, $data = null)
 {
-	Error::addExtraErrorInfo($name, $data);
+	Infira\Error\Handler::addExtraErrorInfo($name, $data);
 }

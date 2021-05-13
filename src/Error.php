@@ -2,9 +2,9 @@
 
 namespace Infira\Error;
 
-use \Infira\Utils\RuntimeMemory as Rm;
-use \Infira\Utils\Http;
-use \Infira\Utils\Session as Sess;
+use Infira\Utils\RuntimeMemory as Rm;
+use Infira\Utils\Http;
+use Infira\Utils\Session as Sess;
 use stdClass;
 
 class Error extends \ErrorException
@@ -24,19 +24,19 @@ class Error extends \ErrorException
 	{
 		if (!$this->stack)
 		{
-			$this->stack             = new stdClass();
-			$this->stack->title      = '';
-			$this->stack->msg        = null;
-			$this->stack->time       = null;
-			$this->stack->url        = null;
-			$this->stack->trace      = null;
-			$this->stack->extra      = null;
-			$this->stack->phpInput   = null;
-			$this->stack->POST       = null;
-			$this->stack->GET        = null;
-			$this->stack->SESSION    = null;
-			$this->stack->SESSION_ID = null;
-			$this->stack->SERVER     = null;
+			$this->stack            = new stdClass();
+			$this->stack->title     = '';
+			$this->stack->msg       = null;
+			$this->stack->time      = null;
+			$this->stack->url       = null;
+			$this->stack->trace     = null;
+			$this->stack->extra     = null;
+			$this->stack->phpInput  = null;
+			$this->stack->post      = null;
+			$this->stack->get       = null;
+			$this->stack->session   = null;
+			$this->stack->sessionID = null;
+			$this->stack->server    = null;
 		}
 	}
 	
@@ -109,9 +109,30 @@ class Error extends \ErrorException
 		$this->dateFormat = $dateFormat;
 	}
 	
-	public function setTrace(array $trace)
+	public function setTrace(array $trace, $traceOptions = null)
 	{
 		$this->makeStack();
+		if ($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS)
+		{
+			foreach ($trace as $k => $arg)
+			{
+				if (isset($trace[$k]['args']))
+				{
+					unset($trace[$k]['args']);
+				}
+			}
+		}
+		foreach ($trace as $k => $arg)
+		{
+			foreach (['ErrorHandler/src/Handler.php', 'ErrorHandler/src/generalMethods.php'] as $c)
+			{
+				if (substr($arg['file'], -strlen($c)) == $c)
+				{
+					unset($trace[$k]);
+				}
+			}
+		}
+		$trace              = array_values($trace);
 		$this->stack->trace = $trace;
 	}
 	
@@ -129,7 +150,7 @@ class Error extends \ErrorException
 		{
 			//return $this->getMessage();
 		}
-		$str = "[ERROR_MSG]<br>
+		$str = "
 		<table cellpadding='0' cellspacing='0' border='0'>
 		";
 		foreach ($this->stack as $name => $val)
@@ -146,11 +167,15 @@ class Error extends \ErrorException
 			{
 				$val = '<pre style="margin-top:0;display: inline">' . dump($val) . "</pre>";
 			}
-			$val = str_replace("[NL]", '<br>', $val);
+			$val = str_replace('/var/www/git/gitHubInfira/', '/var/www/', $val);
+			if ($name == 'title')
+			{
+				$name = '[ERROR_MSG]';
+			}
 			
 			$str .= "<tr>
-			<th style='text-align: left;vertical-align: top'>$name:</th>
-			<td>$val</td>
+			<th style='text-align: left;vertical-align: top'>$name:&nbsp;</th>
+			<td>&nbsp;$val</td>
 			</tr>";
 		}
 		$str .= '</table>';

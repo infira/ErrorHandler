@@ -2,8 +2,6 @@
 
 namespace Infira\Error;
 
-use Infira\Utils\Is as Is;
-use PHPMailer\PHPMailer\PHPMailer as PHPMailer;
 use Infira\Utils\RuntimeMemory as Rm;
 
 /**
@@ -14,10 +12,8 @@ class Handler
 	private static $options;
 	private static $trace                = null;
 	public static  $debugBacktraceOption = 1; //https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
-	const UNDEFINED = '___undefined___';
-	const BREAK     = '___break___';
-	private static $isInited          = false;
-	private static $defaultDateFormat = 'd.m.Y H:i:s';
+	private static $isInited             = false;
+	private static $defaultDateFormat    = 'd.m.Y H:i:s';
 	
 	/**
 	 * Handler constructor.
@@ -25,13 +21,12 @@ class Handler
 	 * @param array $options
 	 *  errorLevel - -1,//-1 means all erors, see https://www.php.net/manual/en/function.error-reporting.php
 	 *  dateFormat - d.m.Y H:i:s
-	 *  email - use to send error to email. defaults to null, a Object which has isHTML() and Send() method in it. I recommend PHPMailer (https://github.com/PHPMailer/PHPMailer)
 	 *  debugBacktraceOption - https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
 	 */
 	public function __construct(array $options = [])
 	{
 		self::$isInited             = true;
-		$default                    = ['dateFormat' => self::$defaultDateFormat, 'email' => null, 'beforeThrow' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
+		$default                    = ['dateFormat' => self::$defaultDateFormat, 'beforeTrigger' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options['debugBacktraceOption'];
 		
@@ -61,18 +56,13 @@ class Handler
 	 * @param string $file
 	 * @param int    $line
 	 * @throws Error
-	 * @return mixed
 	 */
 	private static function trigger(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0)
 	{
 		$error = self::makeError($message, $code, $file, $line);
-		if (self::getOpt('email') !== null)
+		if (is_callable($beforeTrigger = self::getOpt('beforeTrigger')))
 		{
-			self::mail($error);
-		}
-		if (is_callable($beforeThrow = self::getOpt('beforeThrow')))
-		{
-			$res = $beforeThrow($error);
+			$res = $beforeTrigger($error);
 			if ($res === false)
 			{
 				return false;
@@ -81,7 +71,7 @@ class Handler
 		throw $error;
 	}
 	
-	private static function makeError(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0): Error
+	public static function makeError(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0): Error
 	{
 		$error = new Error($message, $code, 1, $file, $line);
 		$error->setTrace(debug_backtrace(self::$debugBacktraceOption));
@@ -102,39 +92,6 @@ class Handler
 		return self::$options[$name];
 	}
 	
-	private static function mail(Error $Error)
-	{
-		$email  = self::getOpt('email');
-		$Mailer = null;
-		if (is_string($email))
-		{
-			if (Is::email($email))
-			{
-				$Mailer = new PHPMailer();
-				$Mailer->addAddress(self::getOpt('email'));
-			}
-		}
-		elseif (is_callable($email))
-		{
-			$Mailer = $email();
-		}
-		else
-		{
-			$Mailer = $email;
-		}
-		if (is_object($Mailer))
-		{
-			if (!$Mailer->Subject)
-			{
-				$Mailer->Subject = 'Page ErrorReporting - ' . $Error->getTitle();
-			}
-			$Mailer->Body = $Error->getHTMLTable();
-			$Mailer->isHTML(true);
-			$Mailer->Send();
-		}
-	}
-	
-	//########################################################################################### SOF Public Actions
 	public static function clearExtraErrorInfo()
 	{
 		Rm::Collection('ErrorHandlerExtraInfo')->flush();
@@ -146,9 +103,9 @@ class Handler
 	 * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
 	 * @param mixed        $data [$name=>$data] will be added to error output
 	 */
-	public static function addExtraErrorInfo($name, $data = self::UNDEFINED)
+	public static function addExtraErrorInfo($name, $data = null)
 	{
-		if (is_array($name) and $data === self::UNDEFINED)
+		if (is_array($name) and $data === null)
 		{
 			foreach ($name as $n => $v)
 			{
@@ -179,25 +136,7 @@ class Handler
 	}
 	
 	/**
-	 * Send error to email only, code will continue executing
-	 * will work when email is configured
-	 * Uses PHPMailer
-	 *
-	 * @param string $message
-	 * @param mixed  $extra - extra data will be added to error message
-	 * @return void
-	 */
-	public static function raiseEmail(string $message, $extra = null): void
-	{
-		if ($extra)
-		{
-			self::addExtraErrorInfo($extra);
-		}
-		self::mail(self::makeError($message, E_USER_ERROR));
-	}
-	
-	/**
-	 * Error exception handler, will return error as HTML
+	 * Error exception catcher, will covert to Infira\Error\Error
 	 *
 	 * @param \Throwable $throwable
 	 * @return Error
@@ -205,35 +144,19 @@ class Handler
 	public function catch(\Throwable $throwable): Error
 	{
 		$trace = $throwable->getTrace();
-		if (self::$debugBacktraceOption === DEBUG_BACKTRACE_IGNORE_ARGS)
-		{
-			foreach ($trace as $k => $arg)
-			{
-				if (isset($trace[$k]['args']))
-				{
-					unset($trace[$k]['args']);
-				}
-			}
-		}
-		
 		if (!checkArray($trace))
 		{
 			$trace = [];
 		}
+		$trace   = [];
 		$trace   = array_reverse($trace);
 		$trace[] = ['file' => $throwable->getFile(), 'line' => $throwable->getLine()];
 		$error   = self::makeError($throwable->getMessage(), $throwable->getCode(), $throwable->getFile(), $throwable->getLine());
-		$error->setTrace(array_reverse($trace));
+		$error->setTrace(array_reverse($trace), self::$debugBacktraceOption);
 		$error->stack();
-		
-		if (self::getOpt('email') !== null)
-		{
-			self::mail($error);
-		}
 		
 		return $error;
 	}
-	//########################################################################################### EOF Public Actions
 }
 
 ?>

@@ -1,23 +1,20 @@
 <?php
 require_once "../vendor/autoload.php";
-$Mailer = new PHPMailer\PHPMailer\PHPMailer();
-$Mailer->addAddress('gen@infira.ee');
-$Mailer->setFrom('beta@infira.ee');
-$Mailer->Subject                = 'My site error';
 $config                         = [];
 $config['errorLevel']           = -1;
-$config['email']                = $Mailer;
-$config['debugBacktraceOption'] = 0;
+$config['debugBacktraceOption'] = DEBUG_BACKTRACE_IGNORE_ARGS;
 
 $Handler = new \Infira\Error\Handler($config);
 
 try
 {
-	addExtraErrorInfo("extraData", "extra data value");
+	addExtraErrorInfo('more',['value1','value2']);
+	//echo $aas;// addExtraErrorInfo("extraData", "extra data value");
 	throw new Exception('throw new Exception');
 	//\Infira\Error\Handler::raise("Raise infira error");
 	//raiseSomeError();
 	//trigger_error("error");
+	alert('my custom error',['extra'=>'data']);
 }
 catch (\Infira\Error\Error $e)
 {
