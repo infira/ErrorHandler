@@ -26,7 +26,7 @@ class Handler
 	public function __construct(array $options = [])
 	{
 		self::$isInited             = true;
-		$default                    = ['dateFormat' => self::$defaultDateFormat, 'beforeTrigger' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0];
+		$default                    = ['dateFormat' => self::$defaultDateFormat, 'beforeTrigger' => null, 'errorLevel' => -1, 'debugBacktraceOption' => 0, 'basePath' => ''];
 		self::$options              = array_merge($default, $options);
 		self::$debugBacktraceOption = self::$options['debugBacktraceOption'];
 		
@@ -74,7 +74,7 @@ class Handler
 	public static function makeError(string $message, int $code = E_USER_ERROR, string $file = '', int $line = 0): Error
 	{
 		$error = new Error($message, $code, 1, $file, $line);
-		$error->setTrace(debug_backtrace(self::$debugBacktraceOption));
+		$error->setTrace(debug_backtrace(self::$debugBacktraceOption),self::getOpt('basePath'));
 		$error->setDateFormat(self::getOpt('dateFormat') ? self::getOpt('dateFormat') : self::$defaultDateFormat);
 		$error->stack();
 		
@@ -151,7 +151,7 @@ class Handler
 		$trace   = array_reverse($trace);
 		$trace[] = ['file' => $throwable->getFile(), 'line' => $throwable->getLine()];
 		$error   = self::makeError($throwable->getMessage(), $throwable->getCode(), $throwable->getFile(), $throwable->getLine());
-		$error->setTrace(array_reverse($trace), self::$debugBacktraceOption);
+		$error->setTrace(array_reverse($trace), self::$debugBacktraceOption,self::getOpt('basePath'));
 		$error->stack();
 		
 		return $error;

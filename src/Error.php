@@ -109,27 +109,28 @@ class Error extends \ErrorException
 		$this->dateFormat = $dateFormat;
 	}
 	
-	public function setTrace(array $trace, $traceOptions = null)
+	public function setTrace(array $trace, $traceOptions = null, string $baseBath = '')
 	{
 		$this->makeStack();
-		if ($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS)
+		foreach ($trace as $k => $arg)
 		{
-			foreach ($trace as $k => $arg)
+			if ($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS)
 			{
-				if (isset($trace[$k]['args']))
+				if (isset($arg['args']))
 				{
 					unset($trace[$k]['args']);
 				}
 			}
-		}
-		foreach ($trace as $k => $arg)
-		{
 			foreach (['ErrorHandler/src/Handler.php', 'ErrorHandler/src/generalMethods.php'] as $c)
 			{
 				if (isset($arg['file']) and substr(strtolower($arg['file']), -strlen($c)) == strtolower($c))
 				{
 					unset($trace[$k]);
 				}
+			}
+			if (isset($arg['file']))
+			{
+				$trace[$k]['file'] = str_replace($baseBath, '', $arg['file']);
 			}
 		}
 		$trace              = array_values($trace);

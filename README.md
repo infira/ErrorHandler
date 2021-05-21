@@ -65,6 +65,7 @@ That's it! Your application is catching errors!
 ```php
 require_once "../vendor/autoload.php";
 $config                         = [];
+$config['basePath']             = getcwd(); //will replace file path in trace to make more cleaner and safety reasons
 $config['errorLevel']           = -1; //will catch all kinds of errors, look https://www.php.net/manual/en/function.error-reporting.php
 $config['beforeTrigger']        = function (\Infira\Error\Error $e)
 {

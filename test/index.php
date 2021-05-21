@@ -1,6 +1,7 @@
 <?php
 require_once "../vendor/autoload.php";
 $config                         = [];
+$config['basePath']             = getcwd();
 $config['errorLevel']           = -1;
 $config['debugBacktraceOption'] = DEBUG_BACKTRACE_IGNORE_ARGS;
 
@@ -8,13 +9,13 @@ $Handler = new \Infira\Error\Handler($config);
 
 try
 {
-	addExtraErrorInfo('more',['value1','value2']);
+	addExtraErrorInfo('more', ['value1', 'value2']);
 	//echo $aas;// addExtraErrorInfo("extraData", "extra data value");
 	throw new Exception('throw new Exception');
 	//\Infira\Error\Handler::raise("Raise infira error");
 	//raiseSomeError();
 	//trigger_error("error");
-	alert('my custom error',['extra'=>'data']);
+	alert('my custom error', ['extra' => 'data']);
 }
 catch (\Infira\Error\Error $e)
 {
