@@ -109,7 +109,7 @@ class Error extends \ErrorException
 		$this->dateFormat = $dateFormat;
 	}
 	
-	public function setTrace(array $trace, $traceOptions = null, string $baseBath = '')
+	public function setTrace(array $trace, $traceOptions = null, string $baseBath = null)
 	{
 		$this->makeStack();
 		foreach ($trace as $k => $arg)
@@ -121,7 +121,7 @@ class Error extends \ErrorException
 					unset($trace[$k]['args']);
 				}
 			}
-			if (isset($arg['file']))
+			if (isset($arg['file']) AND $baseBath !== null)
 			{
 				$trace[$k]['file'] = str_replace($baseBath, '', $arg['file']);
 			}
