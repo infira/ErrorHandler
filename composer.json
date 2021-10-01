@@ -8,7 +8,7 @@
 	  "Infira\\Error\\": "src/"
 	}
   },
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "authors": [
 	{
 	  "name": "Gen Taliaru",
@@ -16,6 +16,6 @@
 	}
   ],
   "require": {
-	"infira/utils": "1.*"
+	"infira/utils": "2.*"
   }
 }
