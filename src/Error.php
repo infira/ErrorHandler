@@ -5,6 +5,7 @@ namespace Infira\Error;
 use Infira\Utils\RuntimeMemory as Rm;
 use Infira\Utils\Http;
 use Infira\Utils\Session as Sess;
+use Infira\Utils\Variable;
 use stdClass;
 
 class Error extends \ErrorException
@@ -166,7 +167,7 @@ class Error extends \ErrorException
 			}
 			elseif (!is_string($val))
 			{
-				$val = '<pre style="margin-top:0;display: inline">' . dump($val) . "</pre>";
+				$val = '<pre style="margin-top:0;display: inline">' . Variable::dump($val) . "</pre>";
 			}
 			if ($name == 'title')
 			{
