@@ -144,7 +144,7 @@ class Handler
 	public function catch(\Throwable $throwable): Error
 	{
 		$trace = $throwable->getTrace();
-		if (!checkArray($trace))
+		if (!is_array($trace))
 		{
 			$trace = [];
 		}
