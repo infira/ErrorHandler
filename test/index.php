@@ -19,12 +19,12 @@ try
 }
 catch (\Infira\Error\Error $e)
 {
-	debug("catch infira error");
+	print("catch infira error");
 	echo $e->getHTMLTable();
 }
 catch (Throwable $e)
 {
-	debug("Catch Throwable");
+	print("Catch Throwable");
 	echo $Handler->catch($e)->getHTMLTable();
 }
 ?>

@@ -2,8 +2,6 @@
 
 namespace Infira\Error;
 
-use Infira\Utils\RuntimeMemory as Rm;
-
 /**
  * This class handles users and php errors
  */
@@ -94,7 +92,7 @@ class Handler
 	
 	public static function clearExtraErrorInfo()
 	{
-		Rm::Collection('ErrorHandlerExtraInfo')->flush();
+		ErrorData::flush();
 	}
 	
 	/**
@@ -114,7 +112,7 @@ class Handler
 		}
 		else
 		{
-			Rm::Collection('ErrorHandlerExtraInfo')->set($name, $data);
+			ErrorData::set($name, $data);
 		}
 	}
 	

@@ -2,10 +2,6 @@
 
 namespace Infira\Error;
 
-use Infira\Utils\RuntimeMemory as Rm;
-use Infira\Utils\Http;
-use Infira\Utils\Session as Sess;
-use Infira\Utils\Variable;
 use stdClass;
 
 class Error extends \ErrorException
@@ -55,18 +51,27 @@ class Error extends \ErrorException
 		$this->stack->time  = date($this->dateFormat);
 		
 		$items             = [];
-		$items['extra']    = Rm::Collection("ErrorHandlerExtraInfo")->getItems();
+		$items['extra']    = ErrorData::getAll();
 		$items['phpInput'] = file_get_contents("php://input");
-		$items['POST']     = Http::getPOST();
-		$items['GET']      = Http::getGET();
-		if (Sess::$isStarted)
+		$items['POST']     = (isset($_SERVER["REQUEST_METHOD"]) and strtolower($_SERVER["REQUEST_METHOD"]) == 'post') ? $_POST : [];
+		$items['GET']      = $_GET;
+		if (session_status() === PHP_SESSION_ACTIVE)
 		{
-			$items['SESSION']    = Sess::get();
-			$items['SESSION_ID'] = Sess::getSID();
+			$items['SESSION']    = $_SESSION;
+			$items['SESSION_ID'] = session_id();
 		}
 		if (isset($_SERVER['HTTP_HOST']))
 		{
-			$items['url'] = Http::getCurrentUrl();
+			$url = 'http';
+			if (isset($_SERVER['HTTPS']))
+			{
+				$isHttps = strtolower($_SERVER['HTTPS']);
+				if ($isHttps == 'on')
+				{
+					$url .= 's';
+				}
+			}
+			$items['url'] = $url . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 		}
 		
 		foreach ($items as $n => $v)
@@ -122,7 +127,7 @@ class Error extends \ErrorException
 					unset($trace[$k]['args']);
 				}
 			}
-			if (isset($arg['file']) AND $baseBath !== null)
+			if (isset($arg['file']) and $baseBath !== null)
 			{
 				$trace[$k]['file'] = str_replace($baseBath, '', $arg['file']);
 			}
@@ -167,7 +172,17 @@ class Error extends \ErrorException
 			}
 			elseif (!is_string($val))
 			{
-				$val = '<pre style="margin-top:0;display: inline">' . Variable::dump($val) . "</pre>";
+				if (is_array($val) or is_object($val))
+				{
+					$dump = print_r($val, true);
+				}
+				else
+				{
+					ob_start();
+					var_dump($val);
+					$dump = ob_get_clean();
+				}
+				$val = '<pre style="margin-top:0;display: inline">' . $dump . "</pre>";
 			}
 			if ($name == 'title')
 			{
