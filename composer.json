@@ -3,7 +3,7 @@
   "description": "Comprehensive php error,notice, etc handler.",
   "type": "library",
   "autoload": {
-	"files": [ "src/generalMethods.php" ],
+	"files": [ "src/helpers.php" ],
 	"psr-4": {
 	  "Infira\\Error\\": "src/"
 	}
@@ -14,5 +14,8 @@
 	  "name": "Gen Taliaru",
 	  "email": "gen@infira.ee"
 	}
-  ]
+  ],
+  "require": {
+	"php": ">=8.0.2"
+  }
 }

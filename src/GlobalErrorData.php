@@ -2,16 +2,16 @@
 
 namespace Infira\Error;
 
-class ErrorData
+class GlobalErrorData
 {
-	private static $data = [];
+	private static array $data = [];
 	
 	public static function set(string $name, $value)
 	{
 		self::$data[$name] = $value;
 	}
 	
-	public static function getAll(): array
+	public static function all(): array
 	{
 		return self::$data;
 	}
