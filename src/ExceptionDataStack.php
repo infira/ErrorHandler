@@ -20,7 +20,7 @@ class ExceptionDataStack
 	public string|null $sessionID     = null;
 	public array       $server        = [];
 	
-	public function __construct(\Throwable $exception, array $trace, $traceOptions = null, string $baseBath = null)
+	public function __construct(\Throwable $exception, array $trace, $traceOptions = null)
 	{
 		//See https://www.php.net/manual/en/errorfunc.constants.php for descriptions
 		$errorCodes = [
@@ -92,18 +92,19 @@ class ExceptionDataStack
 			}
 		}
 		
-		$this->setTrace($trace, $traceOptions, $baseBath);
+		$this->setTrace($trace, $traceOptions);
 	}
 	
-	private function setTrace(array $trace, int $traceOptions = null, string $baseBath = null)
+	private function setTrace(array $trace, int $traceOptions = null)
 	{
+		$baseBath = Handler::$basePath ?: getcwd();
 		foreach ($trace as $k => $arg) {
 			if ($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS) {
 				if (isset($arg['args'])) {
 					unset($trace[$k]['args']);
 				}
 			}
-			if (isset($arg['file']) and $baseBath !== null) {
+			if (isset($arg['file']) and $baseBath) {
 				$trace[$k]['file'] = str_replace($baseBath, '', $arg['file']);
 			}
 		}

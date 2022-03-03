@@ -7,6 +7,8 @@ namespace Infira\Error;
  */
 class Handler
 {
+	public static string|null $basePath = null;
+	
 	/**
 	 * @param int $errorLevel
 	 * @see https://www.php.net/manual/en/function.error-reporting.php
@@ -26,12 +28,11 @@ class Handler
 	 */
 	public static function compile(\Throwable $exception, int $debugBacktraceOption = DEBUG_BACKTRACE_IGNORE_ARGS): ExceptionDataStack
 	{
-		$basePath = dirname(debug_backtrace(0, 1)[0]['file']);
-		$trace    = $exception->getTrace();
+		$trace = $exception->getTrace();
 		if (!$trace) {
 			$trace = debug_backtrace($debugBacktraceOption);
 		}
 		
-		return new ExceptionDataStack($exception, array_reverse($trace), $debugBacktraceOption, $basePath);
+		return new ExceptionDataStack($exception, array_reverse($trace), $debugBacktraceOption);
 	}
 }
