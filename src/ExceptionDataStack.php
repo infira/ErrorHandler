@@ -4,23 +4,23 @@ namespace Infira\Error;
 
 class ExceptionDataStack
 {
-	private string|null $title         = null;
-	private string|null $exception     = null;
-	private string|null $msg           = null;
-	private string|null $time          = null;
-	private string|null $url           = null;
-	private array       $trace         = [];
-	private array       $debug         = [];
-	private array       $gloalDebug    = [];
-	private string|null $requestMethod = null;
-	private string|null $phpInput      = null;
-	private array       $post          = [];
-	private array       $get           = [];
-	private array       $session       = [];
-	private string|null $sessionID     = null;
-	private array       $server        = [];
+	public string|null $title         = null;
+	public string|null $exception     = null;
+	public string|null $msg           = null;
+	public string|null $time          = null;
+	public string|null $url           = null;
+	public array       $trace         = [];
+	public array       $debug         = [];
+	public array       $gloalDebug    = [];
+	public string|null $requestMethod = null;
+	public string|null $phpInput      = null;
+	public array       $post          = [];
+	public array       $get           = [];
+	public array       $session       = [];
+	public string|null $sessionID     = null;
+	public array       $server        = [];
 	
-	public function __construct(\Throwable $exception)
+	public function __construct(\Throwable $exception, array $trace, $traceOptions = null, string $baseBath = null)
 	{
 		//See https://www.php.net/manual/en/errorfunc.constants.php for descriptions
 		$errorCodes = [
@@ -91,9 +91,11 @@ class ExceptionDataStack
 				unset($this->server[$var]);
 			}
 		}
+		
+		$this->setTrace($trace, $traceOptions, $baseBath);
 	}
 	
-	public function setTrace(array $trace, $traceOptions = null, string $baseBath = null)
+	private function setTrace(array $trace, int $traceOptions = null, string $baseBath = null)
 	{
 		foreach ($trace as $k => $arg) {
 			if ($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS) {
@@ -107,6 +109,43 @@ class ExceptionDataStack
 		}
 		$trace       = array_values($trace);
 		$this->trace = $trace;
+	}
+	
+	public function getHTMLTable(): string
+	{
+		$str = "
+		<table cellpadding='0' cellspacing='0' border='0'>
+		";
+		foreach ($this->toArray() as $name => $val) {
+			if ($val === null) {
+				$val = 'null';
+			}
+			if ($name == "msg") {
+				$val = '<font style="color:red">' . $val . '</font>';
+			}
+			elseif (!is_string($val)) {
+				if (is_array($val) or is_object($val)) {
+					$dump = print_r($val, true);
+				}
+				else {
+					ob_start();
+					var_dump($val);
+					$dump = ob_get_clean();
+				}
+				$val = '<pre style="margin-top:0;display: inline">' . $dump . "</pre>";
+			}
+			if ($name == 'title') {
+				$name = '[ERROR_MSG]';
+			}
+			
+			$str .= "<tr>
+			<th style='text-align: left;vertical-align: top'>$name:&nbsp;</th>
+			<td>&nbsp;$val</td>
+			</tr>";
+		}
+		$str .= '</table>';
+		
+		return $str;
 	}
 	
 	public function toArray(): array

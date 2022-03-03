@@ -5,7 +5,7 @@ ErrorHandler
 
 Once in a while some bug gets into production what didn't show up in tests.
 ErrorHandler catches your defined error levels made by php-core, user, and custom errors and outputs it to browser,
-or you can make a custom wrapper to handle erros. Look examples below.
+or you can make a custom wrapper to handle errors. Look examples below.
 
 
 #Install
@@ -61,6 +61,6 @@ try
 	makeError
 }
 catch (Throwable $e) {
-    echo "<pre>".print_r(Handler::compile($e)->toArray(); //outputs all data that has beem collected
+    echo "<pre>".print_r(Handler::compile($e)->toArray(); //outputs all data that has been collected
 }
 ```

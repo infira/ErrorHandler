@@ -22,9 +22,9 @@ class Handler
 	/**
 	 * @param \Throwable $exception
 	 * @param int        $debugBacktraceOption https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
-	 * @return \Infira\Error\ExceptionHandler
+	 * @return \Infira\Error\ExceptionDataStack
 	 */
-	public static function compile(\Throwable $exception, int $debugBacktraceOption = DEBUG_BACKTRACE_IGNORE_ARGS): ExceptionHandler
+	public static function compile(\Throwable $exception, int $debugBacktraceOption = DEBUG_BACKTRACE_IGNORE_ARGS): ExceptionDataStack
 	{
 		$basePath = dirname(debug_backtrace(0, 1)[0]['file']);
 		$trace    = $exception->getTrace();
@@ -33,9 +33,6 @@ class Handler
 		}
 		$trace = array_reverse($trace);
 		
-		$handler = new ExceptionHandler($exception);
-		$handler->setTrace(array_reverse($trace), $debugBacktraceOption, $basePath);
-		
-		return $handler;
+		return new ExceptionDataStack($exception, array_reverse($trace), $debugBacktraceOption, $basePath);
 	}
 }

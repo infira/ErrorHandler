@@ -12,7 +12,7 @@ try {
 	alert('my custom error', ['extra' => 'data']);
 	exit;
 	//echo $aas;// addExtraErrorInfo("extraData", "extra data value");
-	throw new Exception('throw new ExceptionHandler');
+	throw new Exception('error');
 	//\Infira\ErrorException\Handler::raise("Raise infira error");
 	//raiseSomeError();
 	//trigger_error("error");
