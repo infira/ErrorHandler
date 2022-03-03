@@ -31,7 +31,6 @@ class Handler
 		if (!$trace) {
 			$trace = debug_backtrace($debugBacktraceOption);
 		}
-		$trace = array_reverse($trace);
 		
 		return new ExceptionDataStack($exception, array_reverse($trace), $debugBacktraceOption, $basePath);
 	}
