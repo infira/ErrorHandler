@@ -23,7 +23,7 @@ class Error
      */
     public static function trigger(string $msg, mixed $data = null): void
     {
-        throw new Exception($msg, $data);
+        throw (new Exception($msg))->withDebug($data);
     }
 
     public static function clearDebug(): void
