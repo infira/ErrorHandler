@@ -3,19 +3,22 @@
   "description": "Comprehensive php error,notice, etc handler.",
   "type": "library",
   "autoload": {
-	"files": [ "src/helpers.php" ],
-	"psr-4": {
-	  "Infira\\Error\\": "src/"
-	}
+    "files": [
+      "src/helpers.php"
+    ],
+    "psr-4": {
+      "Infira\\Error\\": "src/"
+    }
   },
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "authors": [
-	{
-	  "name": "Gen Taliaru",
-	  "email": "gen@infira.ee"
-	}
+    {
+      "name": "Gen Taliaru",
+      "email": "gen@infira.ee"
+    }
   ],
   "require": {
-	"php": ">=8.0.2"
+    "php": ">=8.0.2",
+    "ramsey/uuid": "^4.6.0"
   }
 }
