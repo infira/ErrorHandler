@@ -2,7 +2,7 @@
 
 namespace Infira\Error\Traits;
 
-use Infira\Error\Exception\Logic\{
+use Infira\Error\Exception\{
     LogicException,
     BadFunctionCallException,
     BadMethodCallException,
@@ -15,38 +15,77 @@ use Throwable;
 
 trait LogicExceptions
 {
-    public static function LogicException(string $message, int $code = 0, Throwable $previous = null): LogicException
+    //region constructors
+    public static function getLogicException(string $message, int $code = 0, Throwable $previous = null): LogicException
     {
         return new LogicException($message, $code, $previous);
     }
 
-    public static function BadFunctionCallException(string $message, int $code = 0, Throwable $previous = null): BadFunctionCallException
+    public static function getBadFunctionCallException(string $message, int $code = 0, Throwable $previous = null): BadFunctionCallException
     {
         return new BadFunctionCallException($message, $code, $previous);
     }
 
-    public static function BadMethodCallException(string $message, int $code = 0, Throwable $previous = null): BadMethodCallException
+    public static function getBadMethodCallException(string $message, int $code = 0, Throwable $previous = null): BadMethodCallException
     {
         return new BadMethodCallException($message, $code, $previous);
     }
 
-    public static function DomainException(string $message, int $code = 0, Throwable $previous = null): DomainException
+    public static function getDomainException(string $message, int $code = 0, Throwable $previous = null): DomainException
     {
         return new DomainException($message, $code, $previous);
     }
 
-    public static function InvalidArgumentException(string $message, int $code = 0, Throwable $previous = null): InvalidArgumentException
+    public static function getInvalidArgumentException(string $message, int $code = 0, Throwable $previous = null): InvalidArgumentException
     {
         return new InvalidArgumentException($message, $code, $previous);
     }
 
-    public static function LengthException(string $message, int $code = 0, Throwable $previous = null): LengthException
+    public static function getLengthException(string $message, int $code = 0, Throwable $previous = null): LengthException
     {
         return new LengthException($message, $code, $previous);
     }
 
-    public static function OutOfRangeException(string $message, int $code = 0, Throwable $previous = null): OutOfRangeException
+    public static function getOutOfRangeException(string $message, int $code = 0, Throwable $previous = null): OutOfRangeException
     {
         return new OutOfRangeException($message, $code, $previous);
     }
+    //endregion
+
+    //region throwers
+    public static function throwLogicException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getLogicException($message, $code, $previous);
+    }
+
+    public static function throwBadFunctionCallException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getBadFunctionCallException($message, $code, $previous);
+    }
+
+    public static function throwBadMethodCallException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getBadMethodCallException($message, $code, $previous);
+    }
+
+    public static function throwDomainException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getDomainException($message, $code, $previous);
+    }
+
+    public static function throwInvalidArgumentException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getInvalidArgumentException($message, $code, $previous);
+    }
+
+    public static function throwLengthException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getLengthException($message, $code, $previous);
+    }
+
+    public static function throwOutOfRangeException(string $message, int $code = 0, Throwable $previous = null): void
+    {
+        throw self::getOutOfRangeException($message, $code, $previous);
+    }
+    //endregion
 }

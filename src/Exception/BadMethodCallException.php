@@ -1,11 +1,11 @@
 <?php
 
-namespace Infira\Error;
+namespace Infira\Error\Exception;
 
 use Infira\Error\Exception\ThrowableDebugDataContract;
 use Infira\Error\Exception\ThrowableDebugDataTrait;
 
-class Exception extends \Exception implements ThrowableDebugDataContract
+class BadMethodCallException extends \BadMethodCallException implements ThrowableDebugDataContract
 {
     use ThrowableDebugDataTrait;
 }

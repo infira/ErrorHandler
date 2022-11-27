@@ -6,6 +6,7 @@ namespace Infira\Error;
 
 use JetBrains\PhpStorm\ArrayShape;
 use Throwable;
+use Infira\Error\Exception\ErrorException;
 
 /**
  * This class handles users and php errors
@@ -13,7 +14,6 @@ use Throwable;
 class Handler
 {
     public static string $dateFormat = 'Y-m-d H:i:s';
-    public static string $basePath = '';
 
     /**
      * @param  array  $options
@@ -26,15 +26,22 @@ class Handler
             'dateFormat' => 'string' //defaults to
         ])] array $options = []
     ): void {
+        register_shutdown_function(static function () {
+            if (error_get_last()) {
+                echo 'Script executed with success', PHP_EOL;
+                debug(getTrace());
+                debug(error_get_last());
+                exit();
+            }
+            exit();
+        });
+
+        set_error_handler(static fn(int $code, string $msg, string $file = null, int $line = null) => throw new ErrorException($msg, $code, 1, $file, $line));
+
         ini_set('error_reporting', (string)$options['errorLevel']);
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
         error_reporting($options['errorLevel']);
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-        if (isset($trace[0])) {
-            static::$basePath = $trace[0]['file'] ?? '';
-            static::$basePath = dirname(static::$basePath);
-        }
         static::$dateFormat = $options['dateFormat'] ?? 'Y-m-d H:i:s';
     }
 

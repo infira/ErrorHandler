@@ -3,27 +3,27 @@
 namespace Infira\Error;
 
 use ErrorException;
-use Infira\Error\Exception\Exception;
+use Infira\Error\Exception\ThrowableDebugDataContract;
 use JetBrains\PhpStorm\ArrayShape;
 use Throwable;
 
 class ExceptionDataStack
 {
-    public string|null $name = null;
     public string|null $message = null;
+    /**
+     * @var class-string
+     */
+    public string $exception = '';
     #[ArrayShape([
-        'class' => 'string', //class-string
         'code' => 'int',
         'file' => 'string',
         'line' => 'int',
-        'debug' => 'array|null',
-        'capsule' => 'array|null',
-    ])] public array $exception = [];
+        'severity' => 'int',
+    ])] public array $error = [];
     public string|null $time = null;
     public string|null $url = null;
-
+    public ?array $debug = [];
     public array $trace = [];
-    public array $globalDebug = [];
     public string|null $requestMethod = null;
 
     /**
@@ -65,42 +65,47 @@ class ExceptionDataStack
         //See https://www.php.net/manual/en/errorfunc.constants.php for descriptions
         $errorCodes = [
             0 => "ErrorException",
-            E_ERROR => "Fatal",
-            E_WARNING => "Warning",
-            E_PARSE => "Parse",
-            E_NOTICE => "Notice",
-            E_CORE_ERROR => "Core fatal",
-            E_CORE_WARNING => "Core warning",
-            E_COMPILE_ERROR => "Compile",
-            E_COMPILE_WARNING => "Compile warning",
-            E_USER_ERROR => "User error",
-            E_USER_WARNING => "User warning",
-            E_USER_NOTICE => "User notice",
-            E_STRICT => "Strict",
-            E_RECOVERABLE_ERROR => "Fatal",
-            E_DEPRECATED => "Deprecated",
-            E_USER_DEPRECATED => "User deprecated",
+            E_ERROR => 'E_ERROR',
+            E_WARNING => 'E_WARNING',
+            E_PARSE => 'E_PARSE',
+            E_NOTICE => 'E_NOTICE',
+            E_CORE_ERROR => 'E_CORE_ERROR',
+            E_CORE_WARNING => 'E_CORE_WARNING',
+            E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+            E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+            E_USER_ERROR => 'E_USER_ERROR',
+            E_USER_WARNING => 'E_USER_WARNING',
+            E_USER_NOTICE => 'E_USER_NOTICE',
+            E_STRICT => 'E_STRICT',
+            E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+            E_DEPRECATED => 'E_DEPRECATED',
+            E_USER_DEPRECATED => 'E_USER_DEPRECATED',
         ];
 
         $code = $exception->getCode();
         $message = $exception->getMessage();
 
-        $this->name = $errorCodes[$code] ?? '[ERROR_MSG]';
-        $this->message = $message;
-        $this->exception = [
-            'class' => '\\'.get_class($exception),
+        $this->message = '<strong>'.($errorCodes[$code] ?? '[ERROR_MSG]').'</strong>: '.$message;
+        $this->exception = '\\'.get_class($exception);
+        $this->error = [
             'code' => $exception->getCode(),
+            //'file' => $exception->getFile(),
+            //'line' => $exception->getLine(),
+            'severity' => $exception instanceof ErrorException ? $exception->getSeverity() : null
+        ];
+        $this->trace[] = [
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
-            'debug' => $exception instanceof Exception ? $exception->getDebugData() : null,
-            'capsule' => $capsuleID ? DebugCollector::all($capsuleID) : null,
         ];
+        $this->debug = $exception instanceof ThrowableDebugDataContract ? $exception->getDebugData() : [];
+        if ($capsuleID && ($capsule = DebugCollector::getCapsuleData($capsuleID))) {
+            $this->debug['capsule'] = $capsule;
+        }
+        if ($global = DebugCollector::all()) {
+            $this->debug['global'] = $global;
+        }
         $this->time = date(Handler::$dateFormat).' '.Handler::$dateFormat;
 
-        if ($exception instanceof ErrorException) {
-            $this->exception['severity'] = $exception->getSeverity();
-        }
-        $this->globalDebug = DebugCollector::all();
         $this->phpInput = file_get_contents("php://input");
         $this->requestMethod = $_SERVER["REQUEST_METHOD"] ?? null;
         $this->post = $this->requestMethod === 'POST' ? $_POST : [];
@@ -119,7 +124,6 @@ class ExceptionDataStack
             }
             $this->url = $url.'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
         }
-
         $this->server = $_SERVER;
         //hide SSL variables
         foreach ($this->server as $var => $val) {
@@ -127,24 +131,21 @@ class ExceptionDataStack
                 unset($this->server[$var]);
             }
         }
-
         $this->setTrace($trace, $traceOptions);
     }
 
     private function setTrace(array $trace, int $traceOptions = null): void
     {
-        $baseBath = Handler::$basePath ?: getcwd();
-        foreach ($trace as $k => $arg) {
+        foreach ($trace as $arg) {
             if (($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS) && isset($arg['args'])) {
                 unset($arg['args']);
             }
-            if (isset($arg['file']) && $baseBath) {
-                $arg['file'] = str_replace($baseBath, '', $arg['file']);
-            }
-            $trace[$k] = $arg;
+            $this->trace[] = $arg;
         }
-        $trace = array_values($trace);
-        $this->trace = $trace;
+        if ((count($this->trace) > 1) && isset($this->trace[1]['file']) && $this->trace[0]['file'] === $this->trace[1]['file']) {
+            unset($this->trace[0]);
+            $this->trace = array_values($this->trace);
+        }
     }
 
     public function toHTMLTable(array $data = null): string
@@ -187,6 +188,7 @@ class ExceptionDataStack
 
     public function toArray(): array
     {
+        return get_object_vars($this);
         $data = [];
         foreach (get_object_vars($this) as $key => $val) {
             if (empty($val)) {

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Infira\Error;
 
-use Infira\Error\Traits\LogicExceptions;
-use Infira\Error\Traits\RunTimeExceptions;
+use Infira\Error\Exception\Exception;
 use Ramsey\Uuid\Uuid;
 
 class Error
 {
-    use RunTimeExceptions;
-    use LogicExceptions;
+    use Traits\CommonExceptions;
+    use Traits\LogicExceptions;
+    use Traits\RunTimeExceptions;
 
     /**
      * Raise a error, code will stop executing
@@ -23,7 +23,7 @@ class Error
      */
     public static function trigger(string $msg, mixed $data = null): void
     {
-        throw (new Exception($msg))->withDebug($data);
+        throw (new Exception($msg))->width($data);
     }
 
     public static function clearDebug(): void
@@ -49,12 +49,13 @@ class Error
         }
     }
 
-    public static function capsule(callable $callback, mixed...$params): mixed
+    public static function capsule(callable $callback): mixed
     {
+        $activeCapsuleID = DebugCollector::getCapsuleID();
         $capsuleID = Uuid::uuid4()->toString();
         DebugCollector::setCapsuleID($capsuleID);
-        $output = $callback(...$params);
-        DebugCollector::clearCapsule($capsuleID);
+        $output = $callback();
+        DebugCollector::clearCapsule($capsuleID, $activeCapsuleID);
 
         return $output;
     }

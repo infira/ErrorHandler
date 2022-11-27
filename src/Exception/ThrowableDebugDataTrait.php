@@ -11,7 +11,12 @@ trait ThrowableDebugDataTrait
         return $this->data;
     }
 
-    public function withDebug(mixed $data): static
+    /**
+     * Attach data to exception for later debugging
+     * @param  mixed  $data
+     * @return $this
+     */
+    public function width(mixed $data): static
     {
         $this->data = $data;
 

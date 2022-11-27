@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Infira\Error;
 
+use Ramsey\Uuid\Uuid;
+
 class DebugCollector
 {
     private static array $data = [];
@@ -20,13 +22,18 @@ class DebugCollector
         self::$data[$name] = $value;
     }
 
-    public static function all(string $capsuleID = null): array
+    public static function all(): array
     {
-        if ($capsuleID !== null) {
+        return self::$data;
+    }
+
+    public static function getCapsuleData(?string $capsuleID): array
+    {
+        if ($capsuleID) {
             return self::$capsuleData[$capsuleID] ?? [];
         }
 
-        return self::$data;
+        return [];
     }
 
     public static function flush(): void
@@ -34,14 +41,14 @@ class DebugCollector
         self::$data = [];
     }
 
-    public static function setCapsuleID(string $capsuleID): void
+    public static function setCapsuleID(?string $capsuleID): void
     {
         self::$capsuleID = $capsuleID;
     }
 
-    public static function clearCapsule(string $capsuleID): void
+    public static function clearCapsule(?string $capsuleID, ?string $setNewCapsuleID): void
     {
-        self::$capsuleID = null;
+        self::$capsuleID = $setNewCapsuleID;
         if (isset(self::$capsuleData[$capsuleID])) {
             unset(self::$capsuleData[$capsuleID]);
         }
@@ -51,5 +58,4 @@ class DebugCollector
     {
         return self::$capsuleID;
     }
-
 }

@@ -6,5 +6,5 @@ interface ThrowableDebugDataContract
 {
     public function getDebugData(): mixed;
 
-    public function withDebug(mixed $data): static;
+    public function width(mixed $data): static;
 }
