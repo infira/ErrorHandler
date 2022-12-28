@@ -4,36 +4,36 @@ declare(strict_types=1);
 
 namespace Infira\Error;
 
-use Ramsey\Uuid\Uuid;
-
 class DebugCollector
 {
     private static array $data = [];
-    private static array $capsuleData = [];
+    /**
+     * @var Capsule[];
+     */
+    private static array $capsules = [];
     private static string|null $capsuleID = null;
 
-    public static function set(string $name, mixed $value): void
+    /**
+     * Add extra to error output for more extended information
+     *
+     * @param  string|array  $name  - string, or in case of array ,every key will be added as extra data key to error output
+     * @param  mixed  $data  [$name=>$data] will be added to error output
+     */
+    public static function set(string|array $name, mixed $data = null): void
     {
-        if (self::$capsuleID) {
-            self::$capsuleData[self::$capsuleID][$name] = $value;
+        if (is_array($name) && $data === null) {
+            foreach ($name as $k => $v) {
+                self::$data[$k] = $v;
+            }
 
             return;
         }
-        self::$data[$name] = $value;
+        self::$data[$name] = $data;
     }
 
     public static function all(): array
     {
         return self::$data;
-    }
-
-    public static function getCapsuleData(?string $capsuleID): array
-    {
-        if ($capsuleID) {
-            return self::$capsuleData[$capsuleID] ?? [];
-        }
-
-        return [];
     }
 
     public static function flush(): void
@@ -46,15 +46,24 @@ class DebugCollector
         self::$capsuleID = $capsuleID;
     }
 
+    public static function makeCapsule(?string $capsuleID): Capsule
+    {
+        if (self::$capsuleID) {
+            return self::$capsules[$capsuleID]['subCapsule'] = new Capsule();
+        }
+
+        return self::$capsules[$capsuleID] = new Capsule();
+    }
+
     public static function clearCapsule(?string $capsuleID, ?string $setNewCapsuleID): void
     {
         self::$capsuleID = $setNewCapsuleID;
-        if (isset(self::$capsuleData[$capsuleID])) {
-            unset(self::$capsuleData[$capsuleID]);
+        if (isset(self::$capsules[$capsuleID])) {
+            unset(self::$capsules[$capsuleID]);
         }
     }
 
-    public static function getCapsuleID(): ?string
+    public static function getActiveCapsuleID(): ?string
     {
         return self::$capsuleID;
     }

@@ -1,11 +1,11 @@
 <?php
 
-namespace Infira\Error\Exception\RunTime;
+namespace Infira\Error\Exception\SPL;
 
 use Infira\Error\Exception\ThrowableDebugDataContract;
 use Infira\Error\Exception\ThrowableDebugDataTrait;
 
-class UnexpectedValueException extends \UnexpectedValueException implements ThrowableDebugDataContract
+class OutOfRangeException extends \OutOfRangeException implements ThrowableDebugDataContract
 {
     use ThrowableDebugDataTrait;
 }

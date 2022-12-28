@@ -6,7 +6,7 @@ if (!function_exists('alert')) {
      *
      * @param  string  $msg
      * @param  mixed  $data  - extra error info
-     * @throws \Infira\Error\Exception
+     * @throws \Infira\Error\Exception\TriggerException
      */
     function alert(string $msg, mixed $data = null): void
     {

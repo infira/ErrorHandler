@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Infira\Error;
 
-use Infira\Error\Exception\Exception;
+use Infira\Error\Exception\ExceptionCapsule;
+use Infira\Error\Exception\TriggerException;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 class Error
 {
-    use Traits\CommonExceptions;
-    use Traits\LogicExceptions;
-    use Traits\RunTimeExceptions;
+    use Traits\SPLShortcuts;
 
     /**
      * Raise a error, code will stop executing
@@ -19,11 +19,11 @@ class Error
      * @param  string  $msg
      * @param  mixed  $data  - extra data will be added to error message
      * @return void
-     * @throws Exception
+     * @throws TriggerException
      */
     public static function trigger(string $msg, mixed $data = null): void
     {
-        throw (new Exception($msg))->width($data);
+        throw (new TriggerException($msg))->width($data);
     }
 
     public static function clearDebug(): void
@@ -40,22 +40,52 @@ class Error
     public static function setDebug(string|array $name, mixed $data = null): void
     {
         if (is_array($name) && $data === null) {
-            foreach ($name as $n => $v) {
-                self::setDebug($n, $v);
-            }
+            DebugCollector::set($name);
         }
         else {
             DebugCollector::set($name, $data);
         }
     }
 
-    public static function capsule(callable $callback): mixed
+    public static function capsule(callable $callback, string $capsuleName = null): mixed
     {
-        $activeCapsuleID = DebugCollector::getCapsuleID();
-        $capsuleID = Uuid::uuid4()->toString();
-        DebugCollector::setCapsuleID($capsuleID);
-        $output = $callback();
-        DebugCollector::clearCapsule($capsuleID, $activeCapsuleID);
+        $capsule = new Capsule($capsuleName);
+        try {
+            // DebugCollector::makeCapsule($capsuleID);
+            $output = $callback($capsule);
+        }
+//        catch (ExceptionCapsule $capsuleException) {
+////            debug([
+////                "ExceptionCapsule catch:" => [
+////                    'file' => $capsuleException->getFile(),
+////                    'line' => $capsuleException->getLine(),
+////                    'trace' => $capsuleException->getTrace(),
+////                ]
+////            ]);
+//            $capsuleException->getCapsule()->merge($capsule);
+//            throw $capsuleException;
+//        }
+        catch (Throwable $exception) {
+//            debug([
+//                "Throwable catch:".$exception::class => [
+//                    'file' => $exception->getFile(),
+//                    'line' => $exception->getLine(),
+//                    'trace' => $exception->getTrace(),
+//                ]
+//            ]);
+            if ($exception instanceof ExceptionCapsule) {
+                $capsule = $capsule->mergeParent($exception->getCapsule());
+                $exception = $exception->getPrevious();
+            }
+            throw new ExceptionCapsule(
+                $exception,
+                $capsule
+            );
+        }
+        finally {
+            //debug("finally is runned");
+            //DebugCollector::clearCapsule($capsuleID, $activeCapsuleID);
+        }
 
         return $output;
     }

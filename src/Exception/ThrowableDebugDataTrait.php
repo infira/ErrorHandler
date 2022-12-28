@@ -4,21 +4,24 @@ namespace Infira\Error\Exception;
 
 trait ThrowableDebugDataTrait
 {
-    private mixed $data = null;
+    private mixed $data = [];
 
     public function getDebugData(): mixed
     {
         return $this->data;
     }
 
-    /**
-     * Attach data to exception for later debugging
-     * @param  mixed  $data
-     * @return $this
-     */
-    public function width(mixed $data): static
+    /** @inheritDoc */
+    public function width(string|array $name, mixed $data = null): static
     {
-        $this->data = $data;
+        if (is_array($name) && $data === null) {
+            foreach ($name as $k => $v) {
+                $this->data[$k] = $v;
+            }
+
+            return $this;
+        }
+        $this->data[$name] = $data;
 
         return $this;
     }
