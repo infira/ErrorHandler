@@ -23,7 +23,14 @@ class Error
      */
     public static function trigger(string $msg, mixed $data = null): void
     {
-        throw (new TriggerException($msg))->width($data);
+        $exception = (new TriggerException($msg));
+        if ($data) {
+            if (!is_array($data)) {
+                $data = [$data];
+            }
+            $exception->width($data);
+        }
+        throw $exception;
     }
 
     public static function clearDebug(): void
