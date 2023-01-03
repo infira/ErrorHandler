@@ -30,19 +30,6 @@ class Handler
         ini_set('display_startup_errors', '1');
         error_reporting($options['errorLevel']);
         static::$dateFormat = $options['dateFormat'] ?? 'Y-m-d H:i:s';
-
-        register_shutdown_function(static function () {
-            if (error_get_last()) {
-                //throw new \ErrorException($msg, $code, 1, $file, $line);
-                debug(["register_shutdown_function" => error_get_last()]);
-                exit;
-                echo 'Script executed with success', PHP_EOL;
-                debug(getTrace());
-                debug(error_get_last());
-                exit();
-            }
-            exit();
-        });
         set_error_handler(static function (int $code, string $msg, string $file = null, int $line = null) {
             throw new \ErrorException($msg, $code, 1, $file, $line);
         });

@@ -23,7 +23,7 @@ class DebugCollector
     {
         if (is_array($name) && $data === null) {
             foreach ($name as $k => $v) {
-                self::$data[$k] = $v;
+                self::set($k, $v);
             }
 
             return;
