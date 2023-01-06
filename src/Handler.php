@@ -42,14 +42,6 @@ class Handler
      */
     public static function compile(Throwable $exception, int $traceOptions = DEBUG_BACKTRACE_IGNORE_ARGS): ExceptionDataStack
     {
-        $trace = $exception->getTrace();
-        if (!$trace && !($exception instanceof \Error)) {
-            debug($exception);
-            debug(debug_backtrace());
-            exit("ErrorHandler kas seda on vaja siia?");
-            $trace = debug_backtrace();
-        }
-
         return new ExceptionDataStack($exception, $traceOptions, DebugCollector::getActiveCapsuleID());
     }
 }
