@@ -25,10 +25,11 @@ class Handler
             'dateFormat' => 'string' //defaults to
         ])] array $options = []
     ): void {
-        ini_set('error_reporting', $options['errorLevel'] ?? -1);
+        $errorLevel = $options['errorLevel'] ?? -1;
+        ini_set('error_reporting', $errorLevel);
+        error_reporting($errorLevel);
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
-        error_reporting($options['errorLevel']);
         static::$dateFormat = $options['dateFormat'] ?? 'Y-m-d H:i:s';
         set_error_handler(static function (int $code, string $msg, string $file = null, int $line = null) {
             throw new \ErrorException($msg, $code, 1, $file, $line);
