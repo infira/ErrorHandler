@@ -25,7 +25,7 @@ class Handler
             'dateFormat' => 'string' //defaults to
         ])] array $options = []
     ): void {
-        ini_set('error_reporting', (string)$options['errorLevel']);
+        ini_set('error_reporting', $options['errorLevel'] ?? -1);
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
         error_reporting($options['errorLevel']);
