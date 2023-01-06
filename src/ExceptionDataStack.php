@@ -79,11 +79,13 @@ class ExceptionDataStack
         $this->phpInput = file_get_contents("php://input");
         $this->requestMethod = $_SERVER["REQUEST_METHOD"] ?? null;
 
-        if ($_SERVER["REQUEST_METHOD"] === 'POST' && $_POST) {
-            $this->request['$_POST'] = $_POST;
-        }
-        if ($_GET) {
-            $this->request['$_GET'] = $_GET;
+        if ($this->requestMethod) {
+            if ($this->requestMethod === 'POST' && $_POST) {
+                $this->request['$_POST'] = $_POST;
+            }
+            if ($_GET) {
+                $this->request['$_GET'] = $_GET;
+            }
         }
         if (isset($_SERVER['HTTP_HOST'])) {
             $url = 'http';
