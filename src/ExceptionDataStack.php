@@ -107,13 +107,6 @@ class ExceptionDataStack
             }
             $this->trace[] = $arg;
         }
-        if (
-            isset($this->trace[0]['file'], $this->trace[1]['file'])
-            && $this->trace[0]['file'] === $this->trace[1]['file']
-        ) {
-            unset($this->trace[0]);
-            $this->trace = array_values($this->trace);
-        }
     }
 
     public function setDebug(string $name, mixed $data): static
