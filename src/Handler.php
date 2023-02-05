@@ -21,11 +21,11 @@ class Handler
      */
     public static function register(
         #[ArrayShape([
-            'errorLevel' => 'int', //defaults to
+            'errorLevel' => 'int', //defaults to E_ALL
             'dateFormat' => 'string' //defaults to
         ])] array $options = []
     ): void {
-        $errorLevel = $options['errorLevel'] ?? -1;
+        $errorLevel = $options['errorLevel'] ?? E_ALL;
         ini_set('error_reporting', $errorLevel);
         error_reporting($errorLevel);
         ini_set('display_errors', '1');
@@ -33,7 +33,7 @@ class Handler
         static::$dateFormat = $options['dateFormat'] ?? 'Y-m-d H:i:s';
         set_error_handler(static function (int $code, string $msg, string $file = null, int $line = null) {
             throw new \ErrorException($msg, $code, 1, $file, $line);
-        });
+        }, $errorLevel);
     }
 
     /**
