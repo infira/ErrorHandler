@@ -101,6 +101,12 @@ class ExceptionDataStack
 
     private function setTrace(\Throwable $exception, int $traceOptions = null): void
     {
+        if ($exception instanceof \Error) {
+            $this->trace[] = [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine()
+            ];
+        }
         foreach ($exception->getTrace() as $arg) {
             if (($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS) && isset($arg['args'])) {
                 unset($arg['args']);
