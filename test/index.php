@@ -1,30 +1,37 @@
 <?php
+
+use Infira\Error\Handler;
+use Infira\Error\Error;
+
 require_once "../vendor/autoload.php";
-$config                         = [];
-$config['basePath']             = getcwd();
-$config['errorLevel']           = -1;
-$config['debugBacktraceOption'] = DEBUG_BACKTRACE_IGNORE_ARGS;
+Handler::register([
+    'errorLevel' => -1,
+    'dateFormat' => 'd.m.Y H:i:s'
+]);
+try {
+    Error::capsule(function () {
+        Error::setDebug(['blaah' => "asdasd"]);
+        //none
+    });
 
-$Handler = new \Infira\Error\Handler($config);
+    throw Error::RuntimeException('aasd')->withDebug([
+        'global debug data' => 'random string'
+    ]);
 
-try
-{
-	addExtraErrorInfo('more', ['value1', 'value2']);
-	//echo $aas;// addExtraErrorInfo("extraData", "extra data value");
-	throw new Exception('throw new Exception');
-	//\Infira\Error\Handler::raise("Raise infira error");
-	//raiseSomeError();
-	//trigger_error("error");
-	alert('my custom error', ['extra' => 'data']);
+
+    Error::setDebug('global debug data', 'random string');
+    asdasds("trigger_error");
+    exit;
+    addExtraErrorInfo('more', ['value1', 'value2']);
+    alert('my custom error', ['extra' => 'data']);
+    exit;
+    //echo $aas;// addExtraErrorInfo("extraData", "extra data value");
+    throw new Exception('error');
+    //\Infira\ErrorException\Handler::raise("Raise infira error");
+    //raiseSomeError();
+    //trigger_error("error");
 }
-catch (\Infira\Error\Error $e)
-{
-	print("catch infira error");
-	echo $e->getHTMLTable();
+catch (Throwable $e) {
+    echo "<pre>";
+    echo print_r(Handler::compile($e)->toArray());
 }
-catch (Throwable $e)
-{
-	print("Catch Throwable");
-	echo $Handler->catch($e)->getHTMLTable();
-}
-?>
