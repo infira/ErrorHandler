@@ -12,5 +12,5 @@ interface ThrowableDebugDataContract
      * @param  string|array  $name  - string, or in case of array ,every key will be added as extra data key to error output
      * @param  mixed  $data  [$name=>$data] will be added to error output
      */
-    public function width(string|array $name, mixed $data = null): static;
+    public function with(string|array $name, mixed $data = null): static;
 }

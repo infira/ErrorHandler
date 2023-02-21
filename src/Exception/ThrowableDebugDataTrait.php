@@ -12,7 +12,7 @@ trait ThrowableDebugDataTrait
     }
 
     /** @inheritDoc */
-    public function width(string|array $name, mixed $data = null): static
+    public function with(string|array $name, mixed $data = null): static
     {
         if (is_array($name) && $data === null) {
             foreach ($name as $k => $v) {

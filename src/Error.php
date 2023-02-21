@@ -6,7 +6,6 @@ namespace Infira\Error;
 
 use Infira\Error\Exception\ExceptionCapsule;
 use Infira\Error\Exception\TriggerException;
-use Ramsey\Uuid\Uuid;
 use Throwable;
 
 class Error
@@ -28,7 +27,7 @@ class Error
             if (!is_array($data)) {
                 $data = [$data];
             }
-            $exception->width($data);
+            $exception->with($data);
         }
         throw $exception;
     }
