@@ -26,7 +26,6 @@ class Handler
         ])] array $options = []
     ): void {
         $errorLevel = $options['errorLevel'] ?? E_ALL;
-        ini_set('error_reporting', $errorLevel);
         error_reporting($errorLevel);
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
