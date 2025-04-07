@@ -5,25 +5,34 @@ namespace Infira\Error;
 use ErrorException;
 use Infira\Error\Exception\ExceptionCapsule;
 use Infira\Error\Exception\ThrowableDebugDataContract;
+use ReflectionFunction;
+use ReflectionMethod;
 use Throwable;
 
 class ExceptionDataStack
 {
-    public string|null $message = null;
-    public string|null $time = null;
-    public string|null $url = null;
-    public array $exception = ['name' => null];
-    public mixed $code = null;
-    public mixed $severity = null;
-    public array $debug = [];
-    public array $trace = [];
-    public string|null $requestMethod = null;
-    public string|null $phpInput = null;
-    public array $request = [];
-    private Throwable $exceptionObject;
+    public array $data = [];
+    private Throwable $realException;
+    private static ?string $errorClassFileLocation = null;
 
-    public function __construct(Throwable $exception, int $traceOptions = DEBUG_BACKTRACE_IGNORE_ARGS, string $capsuleID = null)
+    /**
+     * @param Throwable $exception
+     * @param array{
+     *     ignoreArgs: bool,
+     *     voidInternalFiles: bool,
+     *     setArgumentNames: bool,
+     *     shortCallable: bool,
+     * } $traceOptions
+     */
+    public function __construct(Throwable $exception, array $traceOptions = [])
     {
+        $defaultTraceOptions = [
+            'ignoreArgs' => false,
+            'voidInternalFiles' => true,
+            'setArgumentNames' => true,
+            'shortCallable' => true,
+        ];
+        $traceOptions = array_merge($defaultTraceOptions, $traceOptions);
         //See https://www.php.net/manual/en/errorfunc.constants.php for descriptions
         $errorCodes = [
             E_ERROR => 'E_ERROR',
@@ -43,49 +52,51 @@ class ExceptionDataStack
             E_USER_DEPRECATED => 'E_USER_DEPRECATED',
         ];
 
-        //debug($exception);
-        $realException = $exception;
-        $capsuleData = null;
-        $tree = &$capsuleData;
-        while ($realException instanceof ExceptionCapsule) {
-            $capsule = $realException->getCapsule();
-            $name = $capsule->getName();
-            if ($tree === null) {
-                $tree[$name] = $capsule->all();
-                $tree = &$tree[$name];
-            }
-            $realException = $realException->getPrevious();
+        $capsule = null;
+        while ($exception instanceof ExceptionCapsule) {
+            $capsule = $exception->getCapsule();
+            $exception = $exception->getCaughtException();
         }
+        $this->realException = $exception;
         unset($tree);
-        if ($capsuleData) {
-            $this->exception = array_merge($this->exception, $capsuleData);
+        $this->data = [
+            'message' => (isset($errorCodes[$exception->getCode()]) ? $errorCodes[$exception->getCode()].': ' : '').$exception->getMessage(),
+            'time' => date(Handler::$dateFormat),
+            'exception' => [
+                'class' => '\\'.get_class($exception),
+                'code' => $exception->getCode()
+            ],
+            'global-debug' => [],
+            'trace' => []
+        ];
+        if ($exception instanceof ErrorException) {
+            $this->data['exception']['severity'] = $exception->getSeverity();
         }
-        $this->exceptionObject = $realException;
+        if ($capsule) {
+            $this->data['exception'] = array_merge($this->data['exception'], $capsule->all());
+        }
+        $this->data['trace'] = $this->getTrace($exception, $traceOptions);
 
-        $this->message = (isset($errorCodes[$realException->getCode()]) ? $errorCodes[$realException->getCode()].': ' : '').$realException->getMessage();
-        $this->exception['name'] = '\\'.get_class($realException);
-        $this->code = $realException->getCode();
-        $this->severity = $realException instanceof ErrorException ? $realException->getSeverity() : null;
-        $this->setTrace($realException, $traceOptions);
-
-        if ($realException instanceof ThrowableDebugDataContract) {
-            $this->exception['debugData'] = $realException->getDebugData();
+        if ($exception instanceof ThrowableDebugDataContract) {
+            if ($exception->getDebugData()) {
+                $this->data['exception']['debugData'] = $exception->getDebugData();
+            }
         }
 
         if ($global = DebugCollector::all()) {
-            $this->setDebug('global debugData', $global);
+            $this->data['global-debug'] = $global;
         }
-        $this->time = date(Handler::$dateFormat).' '.Handler::$dateFormat;
-        $this->phpInput = file_get_contents("php://input");
-        $this->requestMethod = $_SERVER["REQUEST_METHOD"] ?? null;
-
-        if ($this->requestMethod) {
-            if ($this->requestMethod === 'POST' && $_POST) {
-                $this->request['$_POST'] = $_POST;
-            }
-            if ($_GET) {
-                $this->request['$_GET'] = $_GET;
-            }
+        $requestMethod = $_SERVER["REQUEST_METHOD"] ?? 'not-set';
+        $this->data['http-request'] = [
+            'url' => $_SERVER['REQUEST_URI'] ?? 'not-set',
+            'method' => $requestMethod,
+            'php://input' => file_get_contents("php://input")
+        ];
+        if ($requestMethod === 'POST' && $_POST) {
+            $this->data['http-request']['$_POST'] = $_POST;
+        }
+        if ($_GET) {
+            $this->data['http-request']['$_GET'] = $_GET;
         }
         if (isset($_SERVER['HTTP_HOST'])) {
             $url = 'http';
@@ -95,56 +106,171 @@ class ExceptionDataStack
                     $url .= 's';
                 }
             }
-            $this->url = $url.'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+            $this->data['http-request']['url'] = $url.'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
         }
     }
 
-    private function setTrace(\Throwable $exception, int $traceOptions = null): void
+    /** @internal */
+    public static function __setErrorClassFileLocation(string $path, int $line): void
     {
-        if ($exception instanceof \Error) {
-            $this->trace[] = [
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine()
+        self::$errorClassFileLocation = "$path:$line";
+    }
+
+    private function getTrace(Throwable $throwable, array $traceOptions): array
+    {
+        $trace = [];
+        if ($throwable instanceof \Error) {
+            $trace[] = [
+                'file' => $throwable->getFile(),
+                'line' => $throwable->getLine()
             ];
         }
-        foreach ($exception->getTrace() as $arg) {
-            if (($traceOptions === DEBUG_BACKTRACE_IGNORE_ARGS) && isset($arg['args'])) {
-                unset($arg['args']);
+        foreach ($throwable->getTrace() as $item) {
+            $item['file'] = $item['file'] ?? '';
+            $item['args'] = $item['args'] ?? [];
+
+            $function = $item['function'] ?? '';
+            $callable = $function;
+            if (isset($item['class']) && isset($item['type'])) {
+                $callable = $item['class'].$item['type'].$function;
             }
-            $this->trace[] = $arg;
+
+            if ($traceOptions['voidInternalFiles']) {
+                $originalFileLine = $item['file'];
+                if (isset($item['line'])) {
+                    $originalFileLine .= ':'.$item['line'];
+                }
+                if ($callable === Error::class.'::try') {
+                    continue;
+                }
+                if (self::$errorClassFileLocation === $originalFileLine) {
+                    continue;
+                }
+            }
+
+            if ($traceOptions['ignoreArgs']) {
+                unset($item['args']);
+            }
+            else if ($traceOptions['setArgumentNames']) {
+                $item['args'] = $this->setTraceArgumentNames($item);
+            }
+
+            if ($traceOptions['shortCallable']) {
+                $tmpItem = $item;
+                foreach (['class', 'function', 'type', 'args', 'object'] as $f) {
+                    if (array_key_exists($f, $tmpItem)) {
+                        unset($tmpItem[$f]);
+                    }
+                }
+
+                $newItem = [
+                    'file' => $item['file'],
+                    'line' => $item['line'],
+                ];
+                if ($traceOptions['ignoreArgs']) {
+                    $newItem['called'] = $callable.'()';
+                }
+                else if ($item['args'] ?? []) {
+                    $newItem["called: $callable() with arguments"] = $item['args'];
+                }
+                else {
+                    $newItem['called'] = $callable.'() with no arguments';
+                }
+                $item = array_merge(
+                    $newItem,
+                    $tmpItem
+                );
+            }
+            $trace[] = $item;
         }
+        return $trace;
     }
 
-    public function setDebug(string $name, mixed $data): static
+    /**
+     * @param callable<array> $callback
+     * @return $this
+     */
+    public function mapTrace(callable $callback): static
     {
-        $this->debug[$name] = $data;
-
+        $this->data['trace'] = array_map($callback, $this->data['trace']);
         return $this;
     }
 
     public function print(array $data = null): string
     {
-        return (new Printer)->print($data ?? $this->toArray());
+        return $this->getPrinter($data)->print();
+    }
+
+    public function getPrinter(array $data = null): Printer
+    {
+        return new Printer($data ?? $this->toArray());
     }
 
     public function toArray(): array
     {
-        return array_filter(get_object_vars($this), static function ($v, $k) {
-            if ($k === 'exceptionObject') {
-                return false;
-            }
-
+        return array_filter($this->data, static function ($v) {
             return !empty($v);
         }, ARRAY_FILTER_USE_BOTH);
     }
 
-    public function pipe(callable $callback): ExceptionDataStack
+    public function getException(): Throwable
     {
-        return $callback($this);
+        return $this->realException;
     }
 
-    public function getException(): \Throwable
+    //region internal helpers
+    private function setTraceArgumentNames(array $traceItem): array
     {
-        return $this->exceptionObject;
+        $function = $traceItem['function'] ?? null;
+        $class = $traceItem['class'] ?? null;
+
+        if (!$class && !$function) {
+            return [];
+        }
+
+        if ($class && is_string($function) && str_contains($function, '{closure}')) {
+            return ['{closure}'];
+        }
+
+        if ($class && $function) {
+            $ref = new ReflectionMethod($class, $function);
+        }
+        else {
+            $ref = new ReflectionFunction($function);
+        }
+        $args = $traceItem['args'];
+        $countPassedArguments = count($args);
+        if ($countPassedArguments <= 0) {
+            return [];
+        }
+        $names = array_map(static function (\ReflectionParameter $param) { return $param->getName(); }, $ref->getParameters());
+        $countRealArguments = count($names);
+        if ($countRealArguments === $countPassedArguments) {
+            return array_combine($names, $args);
+        }
+
+        if ($countRealArguments > $countPassedArguments) {
+            return array_combine(
+                array_slice(
+                    $names,
+                    0,
+                    $countPassedArguments
+                ),
+                $args
+            );
+        }
+        //where passed arguments are more than function arguments
+        return array_merge(
+            array_combine(
+                $names,
+                array_slice(
+                    $args,
+                    0,
+                    $countRealArguments
+                )
+            ),
+            ['un_matched_values' => array_slice($args, $countRealArguments)]
+        );
     }
+    //endregion
 }

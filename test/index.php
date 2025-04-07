@@ -14,7 +14,7 @@ try {
         //none
     });
 
-    throw Error::RuntimeException('aasd')->withDebug([
+    throw Error::RuntimeException('aasd')->with([
         'global debug data' => 'random string'
     ]);
 
@@ -32,6 +32,6 @@ try {
     //trigger_error("error");
 }
 catch (Throwable $e) {
-    echo "<pre>";
-    echo print_r(Handler::compile($e)->toArray());
+    //echo "<pre>";
+    echo Handler::compile($e)->print();
 }

@@ -5,75 +5,126 @@ declare(strict_types=1);
 namespace Infira\Error;
 
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
-class Capsule implements \ArrayAccess
+/**
+ * @mixin ErrorDataCollection
+ */
+class Capsule extends ErrorDataCollection
 {
-    private array $data = [];
+    private string $name;
+    private array $onCatch = [];
+    private ?Capsule $parent = null;
+    private bool $hasName = false;
+    private array $trace = [];
 
-    public function __construct(private ?string $name = null)
+    public function __construct(?string $name = null)
     {
-        $this->name = $this->name ?: Uuid::uuid4()->toString();
-    }
-
-    /**
-     * Add extra to error output for more extended information
-     *
-     * @param  string|array  $name  - string, or in case of array ,every key will be added as extra data key to error output
-     * @param  mixed  $data  [$name=>$data] will be added to error output
-     */
-    public function put(string|array $name, mixed $data = null): static
-    {
-        if (is_array($name) && $data === null) {
-            foreach ($name as $k => $v) {
-                $this->put($k, $v);
-            }
-
-            return $this;
+        if ($name !== null) {
+            $this->hasName = true;
         }
-        $this->data[$name] = $data;
+        else {
+            $name = Uuid::uuid4()->toString();
+        }
+        $this->name = $name;
+    }
 
+    public function __debugInfo(): ?array
+    {
+        return [
+            $this->name => [
+                'data' => $this->getRealData(),
+                'parent' => $this->parent ?? 'null',
+            ]
+        ];
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+        $this->hasName = true;
         return $this;
     }
 
-    public function push(mixed $data): static
+    public function setTrace(array $trace): static
     {
-        array_push($this->data, ...$data);
-
+        $this->trace = array_values($trace);
         return $this;
     }
 
-    public function mergeParent(self $capsule): static
+    public function getTrace(): array
     {
-        return $this->put('parent-capsule('.$capsule->getName().')', $capsule->all());
+        return $this->trace;
     }
 
-    public function all(): array
+    public static function make(?string $name = null): static
     {
-        return $this->data;
+        return new static($name);
     }
 
-    public function offsetExists(mixed $offset): bool
+    /** @internal */
+    public function addParent(self $capsule): void
     {
-        return array_key_exists($offset, $this->data);
+        if ($this->parent) {
+            $this->parent->addParent($capsule);
+            return;
+        }
+        $this->parent = $capsule;
     }
 
-    public function offsetGet(mixed $offset): mixed
+    public function all(bool $withName = true): array
     {
-        return $this->data[$offset];
+        $data = parent::all();
+
+        if ($this->parent) {
+            $data['parent.capsule=>('.$this->parent->getDebugName().')'] = $this->parent->all(false);
+        }
+
+        if (!$withName) {
+            return $data;
+        }
+
+        return ['capsule=>('.$this->getDebugName().')' => $data];
     }
 
-    public function offsetSet(mixed $offset, mixed $value): void
+    private function getDebugName(): string
     {
-        $this->data[$offset] = $value;
-    }
-
-    public function offsetUnset(mixed $offset): void
-    {
-        unset($this->data);
+        $name = '';
+        if ($this->hasName) {
+            $name = $this->name;
+        }
+        if (isset($this->trace[0])) {
+            $calledFrom = $this->trace[0];
+            $root = $_SERVER['DOCUMENT_ROOT'] ?? null;
+            $trace = $calledFrom['file'];
+            if ($root) {
+                $trace = './'.str_replace(
+                        str_replace('\\', '/', $root.'/'),
+                        '',
+                        $trace
+                    );
+            }
+            $trace .= ':'.$calledFrom['line'];
+            $name = $name ? $name.'@'.$trace : $trace;
+        }
+        return $name;
     }
 
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function onCatch(callable $callback): static
+    {
+        $this->onCatch[] = $callback;
+        return $this;
+    }
+
+    public function executeOnCatch(Throwable $exception): void
+    {
+        foreach ($this->onCatch as $callback) {
+            $callback($this, $exception);
+        }
     }
 }

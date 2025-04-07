@@ -11,6 +11,11 @@ trait ThrowableDebugDataTrait
         return $this->data;
     }
 
+    public function clearDebugData(): void
+    {
+        $this->data = [];
+    }
+
     /** @inheritDoc */
     public function with(string|array $name, mixed $data = null): static
     {

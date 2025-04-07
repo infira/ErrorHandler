@@ -6,6 +6,8 @@ interface ThrowableDebugDataContract
 {
     public function getDebugData(): mixed;
 
+    public function clearDebugData(): void;
+
     /**
      * Attach data to exception for later debugging
      *

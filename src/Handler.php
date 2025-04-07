@@ -15,7 +15,7 @@ class Handler
     public static string $dateFormat = 'Y-m-d H:i:s';
 
     /**
-     * @param  array  $options
+     * @param array $options
      * @return void
      * @see https://www.php.net/manual/en/function.error-reporting.php
      */
@@ -36,12 +36,17 @@ class Handler
     }
 
     /**
-     * @param  Throwable  $exception
-     * @param  int  $traceOptions  https://stackoverflow.com/questions/12245975/how-to-disable-object-providing-in-debug-backtrace
+     * @param Throwable $exception
+     * @param array{
+     *      ignoreArgs: bool,
+     *      voidInternalFiles: bool,
+     *      setArgumentNames: bool,
+     *      shortCallable: bool,
+     *  } $traceOptions
      * @return ExceptionDataStack
      */
-    public static function compile(Throwable $exception, int $traceOptions = DEBUG_BACKTRACE_IGNORE_ARGS): ExceptionDataStack
+    public static function compile(Throwable $exception, array $traceOptions = []): ExceptionDataStack
     {
-        return new ExceptionDataStack($exception, $traceOptions, DebugCollector::getActiveCapsuleID());
+        return new ExceptionDataStack($exception, $traceOptions);
     }
 }

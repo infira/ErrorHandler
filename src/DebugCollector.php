@@ -6,65 +6,74 @@ namespace Infira\Error;
 
 class DebugCollector
 {
-    private static array $data = [];
+    private static ErrorDataCollection $data;
     /**
      * @var Capsule[];
      */
     private static array $capsules = [];
-    private static string|null $capsuleID = null;
+
+    private static function callData(string $method, mixed ...$args): mixed
+    {
+        if (!isset(self::$data)) {
+            self::$data = new ErrorDataCollection();
+        }
+        if (self::$capsules) {
+            $capsule = array_reverse(self::$capsules)[0];
+            return $capsule->$method(...$args);
+        }
+        return self::$data->$method(...$args);
+    }
 
     /**
      * Add extra to error output for more extended information
      *
-     * @param  string|array  $name  - string, or in case of array ,every key will be added as extra data key to error output
-     * @param  mixed  $data  [$name=>$data] will be added to error output
+     * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
+     * @param mixed $data [$name=>$data] will be added to error output
+     * @deprecated use put instead
      */
     public static function set(string|array $name, mixed $data = null): void
     {
-        if (is_array($name) && $data === null) {
-            foreach ($name as $k => $v) {
-                self::set($k, $v);
-            }
+        self::put(...func_get_args());
+    }
 
-            return;
-        }
-        self::$data[$name] = $data;
+    /**
+     * Add extra to error output for more extended information
+     *
+     * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
+     * @param mixed $data [$name=>$data] will be added to error output
+     */
+    public static function put(string|array $name, mixed $data = null): void
+    {
+        self::callData('put', ...func_get_args());
+    }
+
+    public static function pushTo(string|array $to, mixed $data): void
+    {
+        self::callData('pushTo', ...func_get_args());
+    }
+
+    public static function push(mixed $data): void
+    {
+        self::callData('push', ...func_get_args());
     }
 
     public static function all(): array
     {
-        return self::$data;
+        return self::callData('all');
     }
 
     public static function flush(): void
     {
-        self::$data = [];
+        self::callData('flush');
     }
 
-    public static function setCapsuleID(?string $capsuleID): void
+    public static function addCapsule(Capsule $capsule): void
     {
-        self::$capsuleID = $capsuleID;
+        self::$capsules[] = $capsule;
     }
 
-    public static function makeCapsule(?string $capsuleID): Capsule
+    public static function clearLastCapsule(): void
     {
-        if (self::$capsuleID) {
-            return self::$capsules[$capsuleID]['subCapsule'] = new Capsule();
-        }
-
-        return self::$capsules[$capsuleID] = new Capsule();
-    }
-
-    public static function clearCapsule(?string $capsuleID, ?string $setNewCapsuleID): void
-    {
-        self::$capsuleID = $setNewCapsuleID;
-        if (isset(self::$capsules[$capsuleID])) {
-            unset(self::$capsules[$capsuleID]);
-        }
-    }
-
-    public static function getActiveCapsuleID(): ?string
-    {
-        return self::$capsuleID;
+        array_pop(self::$capsules);
     }
 }

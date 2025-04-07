@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Infira\Error;
 
 use Infira\Error\Exception\ExceptionCapsule;
+use Infira\Error\Exception\ThrowableDebugDataContract;
 use Infira\Error\Exception\TriggerException;
 use Throwable;
 
@@ -15,8 +16,8 @@ class Error
     /**
      * Raise a error, code will stop executing
      *
-     * @param  string  $msg
-     * @param  mixed  $data  - extra data will be added to error message
+     * @param string $msg
+     * @param mixed $data - extra data will be added to error message
      * @return void
      * @throws TriggerException
      */
@@ -40,48 +41,63 @@ class Error
     /**
      * Add extra to error output for more extended information
      *
-     * @param  string|array  $name  - string, or in case of array ,every key will be added as extra data key to error output
-     * @param  mixed  $data  [$name=>$data] will be added to error output
+     * @param string|array $name - string, or in case of array ,every key will be added as extra data key to error output
+     * @param mixed $data [$name=>$data] will be added to error output
      */
     public static function setDebug(string|array $name, mixed $data = null): void
     {
-        if (is_array($name) && $data === null) {
-            DebugCollector::set($name);
-        }
-        else {
-            DebugCollector::set($name, $data);
-        }
+        DebugCollector::put(...func_get_args());
     }
 
+    /**
+     * @param callable $callback
+     * @param string|null $capsuleName
+     * @return mixed
+     * @deprecated use Error::try instead
+     */
     public static function capsule(callable $callback, string $capsuleName = null): mixed
     {
-        $capsule = new Capsule($capsuleName);
+        return self::try($callback, $capsuleName);
+    }
+
+    /**
+     * @param callable $callback
+     * @param string|Capsule|callable|array|null $capsule - in case of array debug data will be added to capsule
+     * @return mixed
+     */
+    public static function try(callable $callback, string|Capsule|array|callable $capsule = null): mixed
+    {
+        if (is_array($capsule)) {
+            $data = $capsule;
+            $capsule = new Capsule();
+            $capsule->put($data);
+        }
+        else if (is_callable($capsule)) {
+            $callable = $capsule;
+            $capsule = new Capsule();
+            $capsule->onCatch($callable);
+        }
+        else if (is_string($capsule) || $capsule === null) {
+            $capsule = new Capsule($capsule);
+        }
+
+        DebugCollector::addCapsule($capsule);
         try {
-            // DebugCollector::makeCapsule($capsuleID);
+            ExceptionDataStack::__setErrorClassFileLocation(__FILE__, __LINE__ + 1);
             $output = $callback($capsule);
         }
-//        catch (ExceptionCapsule $capsuleException) {
-////            debug([
-////                "ExceptionCapsule catch:" => [
-////                    'file' => $capsuleException->getFile(),
-////                    'line' => $capsuleException->getLine(),
-////                    'trace' => $capsuleException->getTrace(),
-////                ]
-////            ]);
-//            $capsuleException->getCapsule()->merge($capsule);
-//            throw $capsuleException;
-//        }
         catch (Throwable $exception) {
-//            debug([
-//                "Throwable catch:".$exception::class => [
-//                    'file' => $exception->getFile(),
-//                    'line' => $exception->getLine(),
-//                    'trace' => $exception->getTrace(),
-//                ]
-//            ]);
+            $capsule->setTrace(debug_backtrace() ?? []);
+            if ($exception instanceof ThrowableDebugDataContract) {
+                $capsule->pushTo('debugData', $exception->getDebugData());
+                $exception->clearDebugData();
+            }
+            $capsule->executeOnCatch($exception);
             if ($exception instanceof ExceptionCapsule) {
-                $capsule = $capsule->mergeParent($exception->getCapsule());
-                $exception = $exception->getPrevious();
+                $exceptionCapsule = $exception->getCapsule();
+                $exceptionCapsule->addParent($capsule);
+                $capsule = $exceptionCapsule;
+                $exception = $exception->getCaughtException();
             }
             throw new ExceptionCapsule(
                 $exception,
@@ -89,10 +105,8 @@ class Error
             );
         }
         finally {
-            //debug("finally is runned");
-            //DebugCollector::clearCapsule($capsuleID, $activeCapsuleID);
+            DebugCollector::clearLastCapsule();
         }
-
         return $output;
     }
 }
