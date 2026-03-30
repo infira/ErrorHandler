@@ -30,7 +30,7 @@ class Handler
         ini_set('display_errors', '1');
         ini_set('display_startup_errors', '1');
         static::$dateFormat = $options['dateFormat'] ?? 'Y-m-d H:i:s';
-        set_error_handler(static function (int $code, string $msg, string $file = null, int $line = null) {
+        set_error_handler(static function (int $code, string $msg, ?string $file = null, ?int $line = null) {
             throw new \ErrorException($msg, $code, 1, $file, $line);
         }, $errorLevel);
     }

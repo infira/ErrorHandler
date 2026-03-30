@@ -55,17 +55,17 @@ class Error
      * @return mixed
      * @deprecated use Error::try instead
      */
-    public static function capsule(callable $callback, string $capsuleName = null): mixed
+    public static function capsule(callable $callback, ?string $capsuleName = null): mixed
     {
         return self::try($callback, $capsuleName);
     }
 
     /**
      * @param callable $callback
-     * @param string|Capsule|callable|array|null $capsule - in case of array debug data will be added to capsule
+     * @param string|array|callable|Capsule|null $capsule - in case of array debug data will be added to capsule
      * @return mixed
      */
-    public static function try(callable $callback, string|Capsule|array|callable $capsule = null): mixed
+    public static function try(callable $callback, string|Capsule|array|callable|null $capsule = null): mixed
     {
         if (is_array($capsule)) {
             $data = $capsule;
