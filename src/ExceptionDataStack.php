@@ -5,8 +5,6 @@ namespace Infira\Error;
 use ErrorException;
 use Infira\Error\Exception\ExceptionCapsule;
 use Infira\Error\Exception\ThrowableDebugDataContract;
-use ReflectionFunction;
-use ReflectionMethod;
 use Throwable;
 
 class ExceptionDataStack
@@ -18,10 +16,10 @@ class ExceptionDataStack
     /**
      * @param Throwable $exception
      * @param array{
-     *     ignoreArgs: bool,
-     *     voidInternalFiles: bool,
-     *     setArgumentNames: bool,
-     *     shortCallable: bool,
+     *     ignoreArgs?: bool,
+     *     voidInternalFiles?: bool,
+     *     setArgumentNames?: bool,
+     *     shortCallable?: bool,
      * } $traceOptions
      */
     public function __construct(Throwable $exception, array $traceOptions = [])
@@ -183,6 +181,7 @@ class ExceptionDataStack
             }
             $trace[] = $item;
         }
+
         return $trace;
     }
 
@@ -193,6 +192,14 @@ class ExceptionDataStack
     public function mapTrace(callable $callback): static
     {
         $this->data['trace'] = array_map($callback, $this->data['trace']);
+
+        return $this;
+    }
+
+    public function withData(string $key, mixed $value): static
+    {
+        $this->data[$key] = $value;
+
         return $this;
     }
 
@@ -223,13 +230,14 @@ class ExceptionDataStack
     {
         $function = $traceItem['function'] ?? null;
         $class = $traceItem['class'] ?? null;
+        $args = $traceItem['args'] ?? [];
 
         if (!$class && !$function) {
-            return [];
+            return $args;
         }
 
-        if ($class && is_string($function) && str_contains($function, '{closure}')) {
-            return ['{closure}'];
+        if (is_string($function) && str_starts_with($function, '{closure:')) {
+            return $args;
         }
 
         if ($class && $function) {
@@ -238,7 +246,6 @@ class ExceptionDataStack
         else {
             $ref = new \ReflectionFunction($function);
         }
-        $args = $traceItem['args'];
         $countPassedArguments = count($args);
         if ($countPassedArguments <= 0) {
             return [];
@@ -259,6 +266,7 @@ class ExceptionDataStack
                 $args
             );
         }
+
         //where passed arguments are more than function arguments
         return array_merge(
             array_combine(
