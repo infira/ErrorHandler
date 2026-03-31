@@ -162,8 +162,8 @@ class ExceptionDataStack
                 }
 
                 $newItem = [
-                    'file' => $item['file'],
-                    'line' => $item['line'],
+                    'file' => $item['file'] ?? '',
+                    'line' => $item['line'] ?? '',
                 ];
                 if ($traceOptions['ignoreArgs']) {
                     $newItem['called'] = $callable.'()';
